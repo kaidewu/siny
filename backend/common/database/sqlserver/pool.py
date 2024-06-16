@@ -1,7 +1,7 @@
 import pyodbc
 from urllib.parse import quote_plus
 from settings.settings import settings
-from typing import List
+from typing import List, Any
 import logging
 
 logger = logging.Logger(__name__)
@@ -59,10 +59,17 @@ class SQLServerDatabasePool:
             logger.info(f"Closing SQL Server with {self.servername}/{self.database}")
             self.db_pool.close()
 
-    def get_db_cursor(self):
-        """Get database connection from pool"""
+    def execute(self, query: str, params: tuple) -> Any:
+        """Execute queries to the database"""
+        try:
+            with self.cursor as cursor:
+                _get_query_data = cursor.execute(
+                    query, params
+                ).fetchall()
 
-        return self.cursor
+            return _get_query_data
+        except Exception as e:
+            raise Exception(f"SQL Server Error: {str(e)}")
 
 
 # Init SQL Server db pool instance

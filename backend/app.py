@@ -35,6 +35,7 @@ def create_app():
     def shutdown_event():
         sqlserver_db_pool.close_pool()
         logger.info("FastAPI app shutdown...")
+        logger.info(sqlserver_db_pool.db_pool is None)
 
     app.exception_handler(HTTPException)(custom_http_exception_handler)
     app.exception_handler(RequestValidationError)(custom_request_validation_error_handler)
