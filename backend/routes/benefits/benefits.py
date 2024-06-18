@@ -103,6 +103,8 @@ async def upload_benefits_file(
 async def get_orma_benefits(
         benefit_name: str = None,
         benefit_code: str = None,
+        benefit_type_code: str = None,
+        benefit_subtype_code: str = None,
         active: bool = True,
         start_created_date: str = None,
         end_created_date: str = datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z",
@@ -115,6 +117,8 @@ async def get_orma_benefits(
         benefits = Benefits(
             benefit_name=benefit_name,
             benefit_code=benefit_code,
+            benefit_type_code=benefit_type_code,
+            benefit_subtype_code=benefit_subtype_code,
             active=active,
             start_created_date=start_created_date,
             end_created_date=end_created_date,

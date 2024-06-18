@@ -41,6 +41,7 @@ class Settings:
         # APP Information
         self.APP_NAME: str = "sinasuite-dl"
         self.TEMP_PATH = Path("../backend/temp/")
+        self.RESOURCES_PATH = Path("../backend/resources/")
         self.API_ROUTE_PREFIX: str = "/api/v1"
         self.SERVICE_PORT: int = 8000
 

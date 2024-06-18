@@ -1,22 +1,26 @@
 from typing import Any
 
-from common.services.centers.centers import Centers
+from common.services.centers.centers import Centers, check_status_db_orma_centers
 from common.errors import raise_http_error, ErrorCode
 from fastapi import APIRouter
-from fastapi.responses import HTMLResponse, JSONResponse
-from settings.settings import settings
+from fastapi.responses import JSONResponse
 
 router = APIRouter()
 
 
 @router.get(
-    path="/centers/helloworld",
+    path="/status/centers",
     tags=["STATUS ORMA_CENTERS"],
     summary="Status of REST API Centers"
 )
 async def status_orma_centers():
     """ Return status of the REST API Benefits Types"""
-    return HTMLResponse(content=settings.HELLOWORLD_HTML.read_text())
+
+    return JSONResponse(
+        content={
+            "status": "Available" if check_status_db_orma_centers() else "Outage"
+        }
+    )
 
 
 @router.get(

@@ -1,5 +1,8 @@
+import logging
 from enum import Enum
 from fastapi import HTTPException
+
+logger = logging.Logger(__name__)
 
 
 class ErrorCode(str, Enum):
@@ -47,6 +50,7 @@ assert len(error_messages) == len(ErrorCode)
 
 
 def raise_http_error(error_code: ErrorCode, message: str = ""):
+    logger.error(message)
     raise HTTPException(
         status_code=error_messages[error_code]["status_code"],
         detail={"error_code": error_code, "message": message},

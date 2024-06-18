@@ -1,6 +1,6 @@
 from typing import Any
 
-from common.services.benefits.benefit_types import BenefitTypes
+from common.services.benefits.benefits_types import BenefitTypes
 from common.errors import raise_http_error, ErrorCode
 from fastapi import APIRouter
 from fastapi.responses import HTMLResponse, JSONResponse
