@@ -35,17 +35,21 @@ def load_int_env(name: str, required: bool = False) -> int:
 
 class Settings:
     """ Backend configuration """
+
     def __init__(self):
         logger.info("Init Config")
 
         # APP Information
         self.APP_NAME: str = "sinasuite-dl"
-        self.TEMP_PATH = Path("../backend/temp/")
-        self.RESOURCES_PATH = Path("../backend/resources/")
+        self.ROOT_PATH: Path = Path("../").resolve()
+        self.TEMP_PATH: Path = Path("../backend/temp/")
+        self.RESOURCES_PATH: Path = Path("../backend/resources/")
+        self.ERROR_LOG_PATH: Path = Path("../backend/common/errors/logs")
         self.API_ROUTE_PREFIX: str = "/api/v1"
-        self.SERVICE_PORT: int = 8000
+        self.HOST: str = "localhost"  # It can be your local IP
+        self.SERVICE_PORT: int = 8080
 
-        self.HELLOWORLD_HTML = Path("../backend/resources/templates/helloworld.html")
+        self.HELLOWORLD_HTML: Path = Path("../backend/resources/templates/helloworld.html")
 
         # LOGGER LEVEL
         self.LOG_LEVEL: str = load_str_env("LOG_LEVEL", required=True)

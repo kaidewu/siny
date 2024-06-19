@@ -1,9 +1,22 @@
+import pandas as pd
 from pathlib import Path
 
-list = []
 
-sql = Path("../resources/").joinpath("stored procedures/PROC_GET_NAV_BENEFITS.sql").read_text(encoding="utf-8")
+def main():
+    df = pd.read_excel(Path("../resources/examples/INPUT-EXAMPLE-WITH-DATA.xlsx").resolve(), sheet_name="TOOLS")
+    text_list_simples_commas = []
+    text_list = []
+    text_list_double_commas = []
 
-sql = sql.replace("{values_idprestaciones}", ", ".join(f"'{text}'" for text in list))
+    for index, row in df.iterrows():
+        text_list.append(str(row["Separator"]))
+        text_list_simples_commas.append(f"'{str(row["Separator"])}'")
+        text_list_double_commas.append(f"\"{str(row["Separator"])}\"")
 
-print(sql)
+    print(f"List sin commas: {', '.join(text_list)}")
+    print(f"List simples commas: {', '.join(text_list_simples_commas)}")
+    print(f"List doubles commas: {', '.join(text_list_double_commas)}")
+
+
+if __name__ == "__main__":
+    main()

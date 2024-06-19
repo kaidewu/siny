@@ -1,6 +1,7 @@
 from typing import Any, List
+import sys
 
-from common.services.erp_interface.prestacion_servicio.prestacion_servicio import ERPPrestacionServicio, InsertERPPrestacionServicio, check_status_db_erp_prestacionservicio
+from common.services.erp_interface.prestacion_servicio.prestacion_servicio import ERPPrestacionServicio, InsertERPPrestacionServicio
 from common.errors import raise_http_error, ErrorCode
 from schemas.erp_interface.prestacion_servicio.prestacion_servicio import PrestacionServicioModel
 
@@ -50,8 +51,8 @@ async def get_erp_prestacionservicio(
         return JSONResponse(
             content=erp_prestacionservicio.return_prestacionservicio()
         )
-    except Exception as e:
-        raise_http_error(ErrorCode.INTERNAL_SERVER_ERROR, message=str(e))
+    except:
+        raise_http_error(file=__file__, sys_traceback=sys.exc_info())
 
 
 @router.post(
@@ -70,5 +71,5 @@ async def insert_erp_prestacionservicio(
         return JSONResponse(
             content=insert_erp_prestacionservicio.insert_prestacionservicio()
         )
-    except Exception as e:
-        raise_http_error(ErrorCode.INTERNAL_SERVER_ERROR, message=str(e))
+    except:
+        raise_http_error(file=__file__, sys_traceback=sys.exc_info())

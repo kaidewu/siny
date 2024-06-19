@@ -1,6 +1,7 @@
 from typing import Any, List
+import sys
 
-from common.services.erp_interface.origen_prestacion.origen_prestacion import ERPOrigenPrestacion, InsertERPOrigenPrestacion, check_status_db_erp_origenprestacion
+from common.services.erp_interface.origen_prestacion.origen_prestacion import ERPOrigenPrestacion, InsertERPOrigenPrestacion
 from common.errors import raise_http_error, ErrorCode
 from schemas.erp_interface.origen_prestacion.origen_prestacion import OrigenPrestacionModel
 
@@ -20,7 +21,6 @@ async def get_erp_prestacion(
         prestacion_name: str = None,
         prestacion_code: str = None,
         ambit_code: str = None,
-        service_code: str = None,
         center_code: str = None,
         read: bool = False,
         active: bool = True,
@@ -33,7 +33,6 @@ async def get_erp_prestacion(
             prestacion_name=prestacion_name,
             prestacion_code=prestacion_code,
             ambit_code=ambit_code,
-            service_code=service_code,
             center_code=center_code,
             read=read,
             active=active,
@@ -44,8 +43,8 @@ async def get_erp_prestacion(
         return JSONResponse(
             content=erp_origenprestacion.return_origenprestacion()
         )
-    except Exception as e:
-        raise_http_error(ErrorCode.INTERNAL_SERVER_ERROR, message=str(e))
+    except:
+        raise_http_error(file=__file__, sys_traceback=sys.exc_info())
 
 
 @router.post(
@@ -64,5 +63,5 @@ async def insert_erp_prestacion(
         return JSONResponse(
             content=insert_erp_origenprestacion.insert_origenprestacion()
         )
-    except Exception as e:
-        raise_http_error(ErrorCode.INTERNAL_SERVER_ERROR, message=str(e))
+    except:
+        raise_http_error(file=__file__, sys_traceback=sys.exc_info())

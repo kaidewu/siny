@@ -1,26 +1,12 @@
+import sys
 from typing import Any
 
-from common.services.centers.centers import Centers, check_status_db_orma_centers
+from common.services.centers.centers import Centers
 from common.errors import raise_http_error, ErrorCode
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 
 router = APIRouter()
-
-
-@router.get(
-    path="/status/centers",
-    tags=["STATUS ORMA_CENTERS"],
-    summary="Status of REST API Centers"
-)
-async def status_orma_centers():
-    """ Return status of the REST API Benefits Types"""
-
-    return JSONResponse(
-        content={
-            "status": "Available" if check_status_db_orma_centers() else "Outage"
-        }
-    )
 
 
 @router.get(
@@ -49,5 +35,5 @@ async def get_orma_centers(
         return JSONResponse(
             content=centers.return_centers()
         )
-    except Exception as e:
-        raise_http_error(ErrorCode.INTERNAL_SERVER_ERROR, message=str(e))
+    except:
+        raise_http_error(file=__file__, sys_traceback=sys.exc_info())

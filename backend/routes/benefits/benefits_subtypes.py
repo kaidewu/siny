@@ -1,25 +1,12 @@
 from typing import Any
+import sys
 
-from common.services.benefits.benefits_subtypes import BenefitSubtypes, check_status_db_subtypes
+from common.services.benefits.benefits_subtypes import BenefitSubtypes
 from common.errors import raise_http_error, ErrorCode
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 
 router = APIRouter()
-
-
-@router.get(
-    path="/status/benefits/subtypes",
-    tags=["STATUS ORMA_BENEFIT_SUBTYPES"],
-    summary="Status of REST API Benefit Subtypes"
-)
-async def status_orma_benefit_subtypes():
-    """ Return status of the REST API Benefits Types"""
-    return JSONResponse(
-        content={
-            "status": "Available" if check_status_db_subtypes() else "Outage"
-        }
-    )
 
 
 @router.get(
@@ -48,5 +35,5 @@ async def get_orma_benefit_subtypes(
         return JSONResponse(
             content=benefit_subtypes.return_benefit_subtypes()
         )
-    except Exception as e:
-        raise_http_error(ErrorCode.INTERNAL_SERVER_ERROR, message=str(e))
+    except:
+        raise_http_error(file=__file__, sys_traceback=sys.exc_info())

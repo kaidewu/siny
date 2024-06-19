@@ -1,22 +1,13 @@
 from typing import Any
+import sys
 
 from common.services.benefits.benefits_types import BenefitTypes
 from common.errors import raise_http_error, ErrorCode
 from fastapi import APIRouter
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import JSONResponse
 from settings.settings import settings
 
 router = APIRouter()
-
-
-@router.get(
-    path="/benefits/types/helloworld",
-    tags=["STATUS ORMA_BENEFIT_TYPES"],
-    summary="Status of REST API Benefit Types"
-)
-async def status_orma_benefit_types():
-    """ Return status of the REST API Benefits Types"""
-    return HTMLResponse(content=settings.HELLOWORLD_HTML.read_text())
 
 
 @router.get(
@@ -43,5 +34,5 @@ async def get_orma_benefit_types(
         return JSONResponse(
             content=benefit_types.return_benefit_types()
         )
-    except Exception as e:
-        raise_http_error(ErrorCode.INTERNAL_SERVER_ERROR, message=str(e))
+    except:
+        raise_http_error(file=__file__, sys_traceback=sys.exc_info())

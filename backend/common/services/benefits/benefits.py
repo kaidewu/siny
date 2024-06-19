@@ -1,7 +1,7 @@
 from pathlib import Path
 import pandas
 import logging
-from typing import Union, Any, List, Dict
+from typing import Union, Any, List, Dict, Tuple
 from settings.settings import settings
 from common.database.sqlserver import sqlserver_db_pool as sqlserver
 from datetime import datetime
@@ -12,25 +12,138 @@ logger = logging.Logger(__name__)
 class BenefitsUpload:
     def __init__(
             self,
-            type_file: str,
-            filename: str,
-            env: str,
-            size: int
+            filename: str
     ) -> None:
-        file_path = Path(settings.TEMP_PATH).joinpath(filename)
+        """
+        Class BenefitsUpload read the Excel provided and loading the ERP_Prestacion, ERP_PrestacionServicio and
+        ERP_OrigenPrestacion endpoint to data loading massively
+        :param filename: the name of the Excel file
+        """
+        self.sqlserver: Any = sqlserver
+        self.file_read = pandas.read_excel(Path(settings.TEMP_PATH).joinpath(filename), sheet_name="BENEFITS")
+        self.erp_prestacion_endpoint: str = f"http://{settings.HOST}:{settings.SERVICE_PORT}{settings.API_ROUTE_PREFIX}/erp/interface/prestacion/insert"
+        self.erp_prestacionservicio_endpoint: str = f"http://{settings.HOST}:{settings.SERVICE_PORT}{settings.API_ROUTE_PREFIX}/erp/interface/prestacion/servicio/insert"
+        self.erp_origenprestacion_endpoint: str = f"http://{settings.HOST}:{settings.SERVICE_PORT}{settings.API_ROUTE_PREFIX}/erp/interface/origen/prestacion/insert"
 
-        if type_file == ".xlsx":
-            self.file_read = pandas.read_excel(file_path, sheet_name="BENEFITS")
-        elif type_file == ".csv":
-            self.file_read = pandas.read_csv(file_path)
-        else:
-            raise Exception("The file uploaded is not a Excel nor CSV. Please verify the file and try again.")
+    def _to_erp_interface_json(self) -> Tuple[List, List, List]:
+        from schemas.erp_interface.prestacion.prestacion import PrestacionModel
+        from schemas.erp_interface.prestacion_servicio.prestacion_servicio import PrestacionServicioModel
+        from schemas.erp_interface.origen_prestacion.origen_prestacion import OrigenPrestacionModel
 
-        self.environment: str = env
-        self.size: int = size
+        # Defined JSON variables
+        erp_prestacion_json: List = []
+        erp_prestacionservicio_json: List = []
+        erp_origenprestacion_json: List = []
 
-    def to_json(self) -> Union[Dict | None]:
-        return self.file_read.to_dict()
+        for index, row in self.file_read.iterrows():
+
+            # Validation that required field are not NULL
+            if pandas.isna(row["Codigo Prestacion"]):
+                raise Exception("Codigo Prestacion can't no be empty")
+
+            if pandas.isna(row["Nombre Prestacion"]):
+                raise Exception("Nombre Prestacion can't no be empty")
+
+            if pandas.isna(row["Codigo Servicio"]):
+                raise Exception("Codigo Servicio can't no be empty")
+
+            service_query: Any = self.sqlserver.execute_select(
+                "SELECT s.IdServicio FROM [SINA_interface_ERP].[dbo].[Servicio] s "
+                "WHERE s.Activo = 1 AND CAST(s.Descripcion AS NVARCHAR(MAX)) = ?", params=str(row["Codigo Servicio"])
+            )
+
+            if not service_query:
+                raise Exception(f"The service {str(row["Codigo Servicio"])} doesn't exists. Please, verify and try again.")
+
+            service_code: str = str(service_query[0][0])
+
+            # Set each Model with the Excel data
+            # Creation of ERP_Prestacion JSON
+            erp_prestacion_json.append(
+                PrestacionModel(**
+                    {
+                        "IdCatalogo": str(row["Catalogo"]) if not pandas.isna(row["Catalogo"]) else None,
+                        "IdPrestacion": str(row["Codigo Prestacion"]),
+                        "IdFamilia": str(row["Codigo Familia"]),
+                        "IdSubfamilia": str(row["Codigo Subfamilia"]),
+                        "Descripcion": str(row["Nombre Prestacion"]),
+                        "UnidadMedida": str(row["Unidad Medida"]) if not pandas.isna(
+                            row["Unidad Medida"]) else None,
+                        "Duracion": int(row["Duracion"]) if not pandas.isna(row["Duracion"]) else None,
+                    }
+                )
+            )
+
+            # Creation of ERP_PrestacionServicio JSON
+            centers_code: List = []
+
+            if pandas.isna(row["Codigo Centro"]):
+                centers_query: Any = self.sqlserver.execute_select(
+                    "SELECT oc.CENT_CODE FROM [sinasuite].[dbo].[ORMA_CENTERS] oc "
+                    "WHERE oc.CENT_DELETED = 0 AND oc.CENT_EXTERNAL = 0 AND 1=?", params=1
+                )
+                for center in centers_query:
+                    centers_code.append(str(center[0]))
+            else:
+                centers_code.append(str(row["Codigo Centro"]))
+
+            for center_code in centers_code:
+                erp_prestacionservicio_json.append(
+                    PrestacionServicioModel(**
+                        {
+                            "IdCatalogo": str(row["Catalogo"]) if not pandas.isna(row["Catalogo"]) else None,
+                            "IdPrestacion": str(row["Codigo Prestacion"]),
+                            "IdServicio": service_code,
+                            "Agendable": True,
+                            "Duracion": int(row["Duracion"]) if not pandas.isna(row["Duracion"]) else None,
+                            "CodCentro": center_code,
+                            "Departamental": str(row["Codigo Prestacion"]),
+                            "Incremento": int(row["Duracion"]) + 10 if not pandas.isna(
+                                row["Duracion"]) else None,
+                            "Decremento": int(10)
+                        }
+                    )
+                )
+
+            # Creation of ERP_PrestacionServicio JSON
+            for center_code in centers_code:
+                erp_origenprestacion_json.append(
+                    OrigenPrestacionModel(**
+                        {
+                            "CodCentro": center_code,
+                            "IdAmbito": str(row["Codigo Ambito"]),
+                            "IdCatalogo": str(row["Catalogo"]) if not pandas.isna(row["Catalogo"]) else None,
+                            "IdPrestacion": str(row["Codigo Prestacion"])
+                        }
+                    )
+                )
+
+        return erp_prestacion_json, erp_prestacionservicio_json, erp_origenprestacion_json
+
+    def return_erp_interface_benefits_insertions(self):
+        from common.services.erp_interface.prestacion.prestacion import InsertERPPrestacion
+        from common.services.erp_interface.prestacion_servicio.prestacion_servicio import InsertERPPrestacionServicio
+        from common.services.erp_interface.origen_prestacion.origen_prestacion import InsertERPOrigenPrestacion
+
+        erp_prestacion_json, erp_prestacionservicio_json, erp_origenprestacion_json = self._to_erp_interface_json()
+
+        insert_erp_prestacion = InsertERPPrestacion(
+            prestacion_body=erp_prestacion_json
+        )
+
+        insert_erp_prestacionservicio = InsertERPPrestacionServicio(
+            prestacionservicio_body=erp_prestacionservicio_json
+        )
+
+        insert_erp_origenprestacion = InsertERPOrigenPrestacion(
+            origenprestacion_body=erp_origenprestacion_json
+        )
+
+        return [
+            insert_erp_prestacion.insert_prestacion(),
+            insert_erp_prestacionservicio.insert_prestacionservicio(),
+            insert_erp_origenprestacion.insert_origenprestacion()
+        ]
 
 
 class Benefits:
@@ -108,13 +221,13 @@ class Benefits:
                 (self.start_created_date and not self.end_created_date) or
                 (not self.start_created_date and self.end_created_date)
         ):
-            raise Exception("The range of created start date or end date can't be empty.")
+            raise ValueError("The range of created start date or end date can't be empty.")
         elif self.start_created_date and self.end_created_date:
             query += " AND ob.BENE_CREATED_DATE BETWEEN ? AND ?"
 
         # FETCH ROW LIMITS
         query += (f" ORDER BY ob.BENE_NAME OFFSET {self.size * (self.page - 1)} ROWS "
-                       f"FETCH NEXT {self.size} ROWS ONLY")
+                  f"FETCH NEXT {self.size} ROWS ONLY")
 
         # Execute the query
         _get_benefits: Any = sqlserver.execute_select(

@@ -6,15 +6,6 @@ from schemas.erp_interface.prestacion_servicio.prestacion_servicio import Presta
 logger = logging.Logger(__name__)
 
 
-def check_status_db_erp_prestacionservicio() -> bool:
-    try:
-        sqlserver.execute("SELECT COUNT(1) FROM [SINA_interface_ERP].[dbo].[PrestacionServicio] WHERE 1=?", 1)
-        return True
-    except Exception as e:
-        logger.error(f"service.erp_interface.prestacion_servicio.prestacion_servicio.check_status_db_erp_prestacionservicio(): {str(e)}")
-        return False
-
-
 class ERPPrestacionServicio:
     def __init__(
             self,
@@ -170,7 +161,7 @@ class InsertERPPrestacionServicio:
         self.sqlserver: Any = sqlserver
         self.prestacionservicio_body: List[PrestacionServicioModel] = prestacionservicio_body
 
-    def insert_prestacionservicio(self) -> Dict[str, Dict[str, List[str]]]:
+    def insert_prestacionservicio(self):
 
         existing_prestacioneservicio: List[str] = []
         new_prestacioneservicio: List[str] = []
@@ -182,7 +173,7 @@ class InsertERPPrestacionServicio:
             for prestacion in self.prestacionservicio_body:
                 # Set parameters
                 params: tuple = (
-                    prestacion.IdCatalogo,
+                    prestacion.IdCatalogo if prestacion.IdCatalogo else "CAT01",
                     prestacion.IdPrestacion,
                     prestacion.IdServicio,
                     None,
@@ -200,7 +191,7 @@ class InsertERPPrestacionServicio:
                     (f"SELECT 1 FROM [SINA_interface_ERP].[dbo].[PrestacionServicio] "
                      f"WHERE IdCatalogo = ? AND IdPrestacion = ? AND IdServicio = ? AND CodCentro = ? "),
                     params=(
-                        prestacion.IdCatalogo,
+                        prestacion.IdCatalogo if prestacion.IdCatalogo else "CAT01",
                         prestacion.IdPrestacion,
                         prestacion.IdServicio,
                         prestacion.CodCentro
@@ -224,8 +215,8 @@ class InsertERPPrestacionServicio:
 
             return {
                 "prestacionServicioStatus": {
-                    "existingPrestacionServicio": existing_prestacioneservicio,
-                    "newPrestacionesServicio": new_prestacioneservicio
+                    "existingPrestacionServicio": ", ".join(f"'{text}'" for text in existing_prestacioneservicio),
+                    "newPrestacionesServicio": ", ".join(f"'{text}'" for text in new_prestacioneservicio)
                 }
             }
         except Exception as e:

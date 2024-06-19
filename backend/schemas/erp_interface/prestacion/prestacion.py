@@ -1,11 +1,12 @@
 from pydantic import BaseModel
+from typing import Union
 
 
 class PrestacionModel(BaseModel):
-    IdCatalogo: str = "CAT01",
-    IdPrestacion: str = None,
-    IdFamilia: str = None,
-    IdSubfamilia: str = None,
-    Descripcion: str = None,
-    UnidadMedida: str = "UND",
+    IdCatalogo: Union[str, None] = None,
+    IdPrestacion: Union[str, None] = None,
+    IdFamilia: Union[str, None] = None,
+    IdSubfamilia: Union[str, None] = None,
+    Descripcion: Union[str, None] = None,
+    UnidadMedida: Union[str, None] = None,
     Duracion: int = 0

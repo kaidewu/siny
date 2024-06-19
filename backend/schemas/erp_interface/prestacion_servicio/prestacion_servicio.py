@@ -1,14 +1,15 @@
 from pydantic import BaseModel
+from typing import Union
 
 
 class PrestacionServicioModel(BaseModel):
-    IdCatalogo: str = "CAT01",
-    IdPrestacion: str = None,
-    IdServicio: str = None,
+    IdCatalogo: Union[str, None] = None,
+    IdPrestacion: Union[str, None] = None,
+    IdServicio: Union[str, None] = None,
     Agendable: bool = True,
     Duracion: int = 0,
-    CodCentro: str = None,
-    Departamental: str = IdPrestacion,
-    Incremento: int = 10,
-    Decremento: int = 10
+    CodCentro: Union[str, None] = None,
+    Departamental: Union[str, None] = None,
+    Incremento: int = 0,
+    Decremento: int = 0
 

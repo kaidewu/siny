@@ -6,15 +6,6 @@ from schemas.erp_interface.prestacion.prestacion import PrestacionModel
 logger = logging.Logger(__name__)
 
 
-def check_status_db_erp_prestacion() -> bool:
-    try:
-        sqlserver.execute("SELECT COUNT(1) FROM [SINA_interface_ERP].[dbo].[Prestacion] WHERE 1=?", 1)
-        return True
-    except Exception as e:
-        logger.error(f"service.erp_interface.prestacion.prestacion.check_status_db_erp_prestacion(): {str(e)}")
-        return False
-
-
 class ERPPrestacion:
     def __init__(
             self,
@@ -152,7 +143,7 @@ class InsertERPPrestacion:
         self.sqlserver: Any = sqlserver
         self.prestacion_body: List[PrestacionModel] = prestacion_body
 
-    def insert_prestacion(self) -> Dict[str, Dict[str, List[str]]]:
+    def insert_prestacion(self):
 
         existing_prestacion: List[str] = []
         new_prestacion: List[str] = []
@@ -164,26 +155,23 @@ class InsertERPPrestacion:
             for prestacion in self.prestacion_body:
                 # Set parameters
                 params: tuple = (
-                    prestacion.IdCatalogo,
+                    prestacion.IdCatalogo if prestacion.IdCatalogo else "CAT01",
                     prestacion.IdPrestacion,
-                    prestacion.IdFamilia,
-                    prestacion.IdSubfamilia,
+                    prestacion.IdFamilia if prestacion.IdFamilia else "",
+                    prestacion.IdSubfamilia if prestacion.IdSubfamilia else "",
                     None,
                     1,
                     prestacion.Descripcion,
-                    prestacion.UnidadMedida,
-                    prestacion.Duracion
+                    prestacion.UnidadMedida if prestacion.UnidadMedida else "UND",
+                    prestacion.Duracion if prestacion.Duracion else 0
                 )
 
                 # Validation of each prestacion in ERP_Prestacion
                 check_query: Any = self.sqlserver.execute_select(
                     (f"SELECT 1 FROM [SINA_interface_ERP].[dbo].[Prestacion] "
-                     f"WHERE IdCatalogo = ? AND IdPrestacion = ? AND IdFamilia = ? AND IdSubfamilia = ? "),
+                     f"WHERE IdPrestacion = ?"),
                     params=(
-                        prestacion.IdCatalogo,
-                        prestacion.IdPrestacion,
-                        prestacion.IdFamilia,
-                        prestacion.IdSubfamilia
+                        prestacion.IdPrestacion
                     )
                 )
 
@@ -204,8 +192,8 @@ class InsertERPPrestacion:
 
             return {
                 "prestacionStatus": {
-                    "existingPrestacion": existing_prestacion,
-                    "newPrestacion": new_prestacion
+                    "existingPrestacion": ", ".join(f"'{text}'" for text in existing_prestacion),
+                    "newPrestacion": ", ".join(f"'{text}'" for text in new_prestacion)
                 }
             }
         except Exception as e:

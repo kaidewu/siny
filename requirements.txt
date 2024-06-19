@@ -9,3 +9,5 @@ aiofiles>=23.2.1
 sqlalchemy>=2.0.30
 pyodbc>=5.1.0
 python-dotenv>=1.0.1
+pyscript>=0.2.5
+requests>=2.32.3

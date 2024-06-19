@@ -5,15 +5,6 @@ from common.database.sqlserver import sqlserver_db_pool as sqlserver
 logger = logging.Logger(__name__)
 
 
-def check_status_db_subtypes() -> bool:
-    try:
-        sqlserver.execute("SELECT COUNT(1) FROM [sinasuite].[dbo].[ORMA_BENEFIT_SUBTYPES] WHERE 1=?", 1)
-        return True
-    except Exception as e:
-        logger.error(f"services.benefits.benefits_subtypes.check_status_db_subtypes(): {str(e)}")
-        return False
-
-
 class BenefitSubtypes:
     def __init__(
             self,
