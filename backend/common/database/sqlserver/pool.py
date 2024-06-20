@@ -106,6 +106,18 @@ class SQLServerDatabasePool:
         except Exception as e:
             raise Exception(f"SQL Server Error: {str(e)}")
 
+    def execute_procedures(self, query: str) -> Any:
+        """Execute select queries to the database"""
+        try:
+            with self.cursor() as cursor:
+                _get_query_data = cursor.execute(
+                    query
+                )
+
+            return _get_query_data
+        except Exception as e:
+            raise Exception(f"SQL Server Error: {str(e)}")
+
 
 # Init SQL Server db pool instance
 sqlserver_db_pool = SQLServerDatabasePool(

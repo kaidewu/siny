@@ -80,11 +80,11 @@ class ERPPrestacionServicio:
             query: str = ("SELECT ps.IdCatalogo, ps.IdPrestacion, p.Descripcion, os.SERV_DESCRIPTION_ES, "
                           "oc.CENT_NAME, p.UnidadMedida, p.Duracion, ps.Agendable, ps.Activo, "
                           "CASE WHEN ps.FLeido IS NULL THEN 0 ELSE 1 END AS isRead, ps.FLeido "
-                          "FROM [SINA_interface_ERP].[dbo].[PrestacionServicio] ps "
-                          "LEFT OUTER JOIN [SINA_interface_ERP].[dbo].[Prestacion] p ON p.IdPrestacion = ps.IdPrestacion AND p.Activo = 1 "
-                          "LEFT OUTER JOIN [sinasuite].[dbo].[ORMA_CENTERS] oc ON oc.CENT_CODE COLLATE Modern_Spanish_CI_AS = ps.CodCentro "
+                          "FROM [dbo].[ERP_PrestacionServicio] ps "
+                          "LEFT OUTER JOIN [dbo].[ERP_Prestacion] p ON p.IdPrestacion = ps.IdPrestacion AND p.Activo = 1 "
+                          "LEFT OUTER JOIN [dbo].[ORMA_CENTERS] oc ON oc.CENT_CODE COLLATE Modern_Spanish_CI_AS = ps.CodCentro "
                           "AND oc.CENT_DELETED = 0 AND oc.CENT_EXTERNAL = 0 "
-                          "LEFT OUTER JOIN [sinasuite].[dbo].[ORMA_SERVICES] os ON os.SERV_CODE COLLATE Modern_Spanish_CI_AS = ps.IdServicio AND os.SERV_DELETED = 0 "
+                          "LEFT OUTER JOIN [dbo].[ORMA_SERVICES] os ON os.SERV_CODE COLLATE Modern_Spanish_CI_AS = ps.IdServicio AND os.SERV_DELETED = 0 "
                           "WHERE ps.Activo = ? AND ps.Agendable = ?")
 
             # Set if it's been read or not
@@ -149,7 +149,8 @@ class ERPPrestacionServicio:
                 "readDate": row[10].strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z" if row[10] and row[10] != "" else None
             } for row in _get_erp_prestacion]
         except Exception as e:
-            logger.error(f"service.erp_interface.prestacion_servicio.prestacion_servicio.ERPPrestacionServicio.return_prestacionservicio(): {str(e)}")
+            logger.error(
+                f"service.erp_interface.prestacion_servicio.prestacion_servicio.ERPPrestacionServicio.return_prestacionservicio(): {str(e)}")
             raise Exception(str(e))
 
 
@@ -163,8 +164,7 @@ class InsertERPPrestacionServicio:
 
     def insert_prestacionservicio(self):
 
-        existing_prestacioneservicio: List[str] = []
-        new_prestacioneservicio: List[str] = []
+        prestacioneservicio: List[str] = []
 
         try:
             # Begin transaction
@@ -173,6 +173,10 @@ class InsertERPPrestacionServicio:
             for prestacion in self.prestacionservicio_body:
                 # Set parameters
                 params: tuple = (
+                    prestacion.IdCatalogo if prestacion.IdCatalogo else "CAT01",
+                    prestacion.IdPrestacion,
+                    prestacion.IdServicio,
+                    prestacion.CodCentro,
                     prestacion.IdCatalogo if prestacion.IdCatalogo else "CAT01",
                     prestacion.IdPrestacion,
                     prestacion.IdServicio,
@@ -186,40 +190,24 @@ class InsertERPPrestacionServicio:
                     prestacion.Decremento
                 )
 
-                # Validation of each prestacion in ERP_Prestacion
-                check_query: Any = self.sqlserver.execute_select(
-                    (f"SELECT 1 FROM [SINA_interface_ERP].[dbo].[PrestacionServicio] "
-                     f"WHERE IdCatalogo = ? AND IdPrestacion = ? AND IdServicio = ? AND CodCentro = ? "),
-                    params=(
-                        prestacion.IdCatalogo if prestacion.IdCatalogo else "CAT01",
-                        prestacion.IdPrestacion,
-                        prestacion.IdServicio,
-                        prestacion.CodCentro
-                    )
+                # Set Insert Query
+                self.sqlserver.execute_insert(
+                    (f"IF NOT EXISTS (SELECT 1 FROM [dbo].[ERP_PrestacionServicio] WHERE IdCatalogo = ? AND IdPrestacion = ? AND IdServicio = ? AND CodCentro = ? )\n"
+                     f"BEGIN\n"
+                     f"INSERT INTO [dbo].[ERP_PrestacionServicio] (IdCatalogo, IdPrestacion, IdServicio, FLeido, Activo, Agendable, Duracion, Codcentro, Departamental, Incremento, Decremento) "
+                     f"VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?); \n"
+                     f"END\n"
+                     ), params=params
                 )
 
-                # If return 1, that means it exists in ERP_Prestacion
-                if check_query:
-                    existing_prestacioneservicio.append(prestacion.IdPrestacion)
-                else:
-                    # Set Insert Query
-                    self.sqlserver.execute_insert(
-                        (f"INSERT INTO [SINA_interface_ERP].[dbo].[PrestacionServicio] (IdCatalogo, IdPrestacion, IdServicio, FLeido, Activo, Agendable, Duracion, Codcentro, Departamental, Incremento, Decremento) "
-                         f"VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"), params=params
-                    )
-
-                    new_prestacioneservicio.append(prestacion.IdPrestacion)
+                prestacioneservicio.append(prestacion.IdPrestacion)
 
             # If there is no error with the insert, it commits the transaction
             self.sqlserver.commit()
 
             return {
-                "prestacionServicioStatus": {
-                    "existingPrestacionServicio": ", ".join(f"'{text}'" for text in existing_prestacioneservicio),
-                    "newPrestacionesServicio": ", ".join(f"'{text}'" for text in new_prestacioneservicio)
-                }
+                "prestacionServicio": ", ".join(f"'{text}'" for text in list(set(prestacioneservicio)))
             }
         except Exception as e:
             self.sqlserver.rollback()
             raise Exception(str(e))
-

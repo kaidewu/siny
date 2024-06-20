@@ -12,6 +12,7 @@ logger = logging.Logger(__name__)
 class BenefitsUpload:
     def __init__(
             self,
+            environment: str,
             filename: str
     ) -> None:
         """
@@ -20,10 +21,8 @@ class BenefitsUpload:
         :param filename: the name of the Excel file
         """
         self.sqlserver: Any = sqlserver
-        self.file_read = pandas.read_excel(Path(settings.TEMP_PATH).joinpath(filename), sheet_name="BENEFITS")
-        self.erp_prestacion_endpoint: str = f"http://{settings.HOST}:{settings.SERVICE_PORT}{settings.API_ROUTE_PREFIX}/erp/interface/prestacion/insert"
-        self.erp_prestacionservicio_endpoint: str = f"http://{settings.HOST}:{settings.SERVICE_PORT}{settings.API_ROUTE_PREFIX}/erp/interface/prestacion/servicio/insert"
-        self.erp_origenprestacion_endpoint: str = f"http://{settings.HOST}:{settings.SERVICE_PORT}{settings.API_ROUTE_PREFIX}/erp/interface/origen/prestacion/insert"
+        self.file_read = pandas.read_excel(Path(settings.TEMP_PATH).joinpath(filename), sheet_name="HOJA PRESTACION")
+        self.environment: str = environment
 
     def _to_erp_interface_json(self) -> Tuple[List, List, List]:
         from schemas.erp_interface.prestacion.prestacion import PrestacionModel
@@ -44,16 +43,19 @@ class BenefitsUpload:
             if pandas.isna(row["Nombre Prestacion"]):
                 raise Exception("Nombre Prestacion can't no be empty")
 
-            if pandas.isna(row["Codigo Servicio"]):
-                raise Exception("Codigo Servicio can't no be empty")
+            if pandas.isna(row["Servicio"]):
+                raise Exception("Servicio can't no be empty")
+
+            if pandas.isna(row["Ambito"]):
+                raise Exception("Ambito can't no be empty")
 
             service_query: Any = self.sqlserver.execute_select(
                 "SELECT s.IdServicio FROM [SINA_interface_ERP].[dbo].[Servicio] s "
-                "WHERE s.Activo = 1 AND CAST(s.Descripcion AS NVARCHAR(MAX)) = ?", params=str(row["Codigo Servicio"])
+                "WHERE s.Activo = 1 AND CAST(s.Descripcion AS NVARCHAR(MAX)) = ?", params=str(row["Servicio"])
             )
 
             if not service_query:
-                raise Exception(f"The service {str(row["Codigo Servicio"])} doesn't exists. Please, verify and try again.")
+                raise Exception(f"The service {str(row["Servicio"])} doesn't exists. Please, verify and try again.")
 
             service_code: str = str(service_query[0][0])
 
@@ -77,7 +79,7 @@ class BenefitsUpload:
             # Creation of ERP_PrestacionServicio JSON
             centers_code: List = []
 
-            if pandas.isna(row["Codigo Centro"]):
+            if pandas.isna(row["Centro"]):
                 centers_query: Any = self.sqlserver.execute_select(
                     "SELECT oc.CENT_CODE FROM [sinasuite].[dbo].[ORMA_CENTERS] oc "
                     "WHERE oc.CENT_DELETED = 0 AND oc.CENT_EXTERNAL = 0 AND 1=?", params=1
@@ -85,7 +87,7 @@ class BenefitsUpload:
                 for center in centers_query:
                     centers_code.append(str(center[0]))
             else:
-                centers_code.append(str(row["Codigo Centro"]))
+                centers_code.append(str(row["Centro"]))
 
             for center_code in centers_code:
                 erp_prestacionservicio_json.append(
@@ -105,13 +107,22 @@ class BenefitsUpload:
                     )
                 )
 
+            ambits_query: Any = self.sqlserver.execute_select(
+                "SELECT oa.AMBI_CODE FROM [sinasuite].[dbo].[ORMA_AMBITS] oa "
+                "WHERE oa.AMBI_DELETED = 0 AND oa.AMBI_DESCRIPTION_ES = ?", params=str(row["Ambito"])
+            )
+            if not ambits_query:
+                raise Exception("Ambito not supported")
+
+            ambits_code: str = str(ambits_query[0][0])
+
             # Creation of ERP_PrestacionServicio JSON
             for center_code in centers_code:
                 erp_origenprestacion_json.append(
                     OrigenPrestacionModel(**
                         {
                             "CodCentro": center_code,
-                            "IdAmbito": str(row["Codigo Ambito"]),
+                            "IdAmbito": ambits_code,
                             "IdCatalogo": str(row["Catalogo"]) if not pandas.isna(row["Catalogo"]) else None,
                             "IdPrestacion": str(row["Codigo Prestacion"])
                         }
@@ -139,11 +150,26 @@ class BenefitsUpload:
             origenprestacion_body=erp_origenprestacion_json
         )
 
-        return [
+        returns_codes: List = [
             insert_erp_prestacion.insert_prestacion(),
             insert_erp_prestacionservicio.insert_prestacionservicio(),
             insert_erp_origenprestacion.insert_origenprestacion()
         ]
+
+        if self.environment != "PRO":
+            try:
+                self.sqlserver.begin()
+
+                self.sqlserver.execute_procedures(
+                    Path(settings.RESOURCES_PATH).joinpath("stored procedures/PROC_GET_NAV_BENEFITS.sql").read_text().replace("{values_idprestaciones}", returns_codes[0].get("prestacion"))
+                )
+            except Exception as e:
+                self.sqlserver.rollback()
+                raise Exception(f"{str(e)}\nCheck the table INTE_ERROR_NOTIFICATIONS.")
+            finally:
+                self.sqlserver.commit()
+
+        return returns_codes
 
 
 class Benefits:

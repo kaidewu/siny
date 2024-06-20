@@ -1,6 +1,9 @@
 import logging
-from typing import Any
+from typing import Any, List
+from pathlib import Path
 from common.database.sqlserver import sqlserver_db_pool as sqlserver
+from schemas.benefits.benefit_subtypes import SubfamiliaModel
+from settings.settings import settings
 
 logger = logging.Logger(__name__)
 
@@ -79,3 +82,62 @@ class BenefitSubtypes:
                 "benefitTypeCode": row[5]
             }
         } for row in _get_benefit_subtypes]
+
+
+class BenefitSubtypesCreation:
+    def __init__(
+            self,
+            benefit_subtypes_body: List[SubfamiliaModel]
+    ) -> None:
+        self.sqlserver: Any = sqlserver
+        self.benefit_subtypes_body: List[SubfamiliaModel] = benefit_subtypes_body
+
+    def returns_new_subtypes(self):
+        benefit_subtypes: List = []
+
+        try:
+            self.sqlserver.begin()
+
+            for subtype in self.benefit_subtypes_body:
+                params: tuple = (
+                    subtype.IdSubfamilia,
+                    subtype.IdFamilia,
+                    subtype.IdSubfamilia,
+                    subtype.Descripcion,
+                    subtype.IdFamilia,
+                    None,
+                    1,
+                    None,
+                    subtype.IdFamilia,
+                )
+
+                self.sqlserver.execute_insert(
+                    (f"IF NOT EXISTS (SELECT 1 FROM [dbo].[ERP_Subfamilia] WHERE IdSubfamilia = ? AND IdFamilia = ?)"
+                     f"BEGIN "
+                     f"INSERT INTO [dbo].[ERP_Subfamilia] (IdSubfamilia, Descripcion, IdFamilia, Servicio, Activo, FLeido, Codtipo) "
+                     f"VALUES (?, ?, ?, ?, ?, ?, (SELECT CodTipo FROM [dbo].[ERP_Familia] WHERE IdFamilia = ?)); "
+                     f"END"), params=params
+                )
+
+                benefit_subtypes.append(subtype.IdSubfamilia)
+
+            self.sqlserver.commit()
+
+            try:
+                self.sqlserver.begin()
+
+                self.sqlserver.execute_procedures(
+                    Path(settings.RESOURCES_PATH).joinpath("stored procedures/PROC_GET_NAV_BENEFIT_TYPES.sql").read_text()
+                )
+            except Exception as e:
+                self.sqlserver.rollback()
+                raise Exception(f"{str(e)}\nCheck the table INTE_ERROR_NOTIFICATIONS for more information.")
+            finally:
+                self.sqlserver.commit()
+
+            return {
+                "benefitSubtypes": ", ".join(f"'{subtype}'" for subtype in list(set(benefit_subtypes)))
+            }
+        except Exception as e:
+            self.sqlserver.rollback()
+            raise Exception(str(e))

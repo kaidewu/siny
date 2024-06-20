@@ -1,10 +1,6 @@
 USE [sinasuite]
-GO
-/****** Object:  StoredProcedure [dbo].[PROC_GET_NAV_BENEFITS]    Script Date: 18/06/2024 19:07:48 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
+SET ANSI_NULLS ON;
+SET QUOTED_IDENTIFIER ON;
 
 BEGIN
 

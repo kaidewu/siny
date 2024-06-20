@@ -66,13 +66,13 @@ class ERPOrigenPrestacion:
                 "SELECT op.IdCatalogo, op.IdPrestacion, p.Descripcion, oa.AMBI_DESCRIPTION_ES, os.SERV_DESCRIPTION_ES, "
                 "oc.CENT_NAME, p.UnidadMedida, op.Activo, "
                 "CASE WHEN op.FLeido IS NULL THEN 0 ELSE 1 END AS isRead, op.FLeido "
-                "FROM [SINA_interface_ERP].[dbo].[OrigenPrestacion] op "
-                "LEFT OUTER JOIN [SINA_interface_ERP].[dbo].[Prestacion] p ON p.IdPrestacion = op.IdPrestacion AND p.Activo = 1 "
-                "LEFT OUTER JOIN [sinasuite].[dbo].[ORMA_AMBITS] oa ON oa.AMBI_CODE COLLATE Modern_Spanish_CI_AS = op.IdAmbito "
+                "FROM [dbo].[ERP_OrigenPrestacion] op "
+                "LEFT OUTER JOIN [dbo].[ERP_Prestacion] p ON p.IdPrestacion = op.IdPrestacion AND p.Activo = 1 "
+                "LEFT OUTER JOIN [dbo].[ORMA_AMBITS] oa ON oa.AMBI_CODE COLLATE Modern_Spanish_CI_AS = op.IdAmbito "
                 "AND oa.AMBI_DELETED = 0 "
-                "LEFT OUTER JOIN [sinasuite].[dbo].[ORMA_CENTERS] oc ON oc.CENT_CODE COLLATE Modern_Spanish_CI_AS = op.CodCentro "
+                "LEFT OUTER JOIN [dbo].[ORMA_CENTERS] oc ON oc.CENT_CODE COLLATE Modern_Spanish_CI_AS = op.CodCentro "
                 "AND oc.CENT_DELETED = 0 AND oc.CENT_EXTERNAL = 0 "
-                "LEFT OUTER JOIN [sinasuite].[dbo].[ORMA_SERVICES] os ON os.SERV_CODE COLLATE Modern_Spanish_CI_AS = op.IdServicio AND os.SERV_DELETED = 0 "
+                "LEFT OUTER JOIN [dbo].[ORMA_SERVICES] os ON os.SERV_CODE COLLATE Modern_Spanish_CI_AS = op.IdServicio AND os.SERV_DELETED = 0 "
                 "WHERE op.Activo = ?")
 
             # Set if it's been read or not
@@ -136,66 +136,56 @@ class InsertERPOrigenPrestacion:
 
     def insert_origenprestacion(self):
 
-        existing_origenprestacion: List[str] = []
-        new_origenprestacion: List[str] = []
+        origenprestacion: List[str] = []
 
         try:
             # Begin transaction
             self.sqlserver.begin()
 
             for prestacion in self.origenprestacion_body:
-                # Get all services except 'ADM', 'TIC'
-                services_code_query: Any = self.sqlserver.execute_select(
-                    ("SELECT s.IdServicio FROM [SINA_interface_ERP].[dbo].[Servicio] s WHERE s.Activo = 1 "
-                     "AND s.IdServicio NOT IN ('ADM', 'TIC') AND 1=?"), params=1
+                # Set parameters
+                params: tuple = (
+                    prestacion.IdCatalogo if prestacion.IdCatalogo else "CAT01",
+                    prestacion.IdPrestacion,
+                    prestacion.IdAmbito,
+                    prestacion.CodCentro,
+                    prestacion.CodCentro,
+                    prestacion.IdAmbito,
+                    prestacion.IdCatalogo if prestacion.IdCatalogo else "CAT01",
+                    prestacion.IdPrestacion,
+                    None,
+                    1,
+                )
+                # Set Insert Query
+                self.sqlserver.execute_insert(
+                    (f"""DECLARE @SERV_CODE NVARCHAR(20)
+                    DECLARE CURSOR_SERVICE CURSOR FOR
+                        SELECT IdServicio FROM [dbo].[ERP_Servicio] WHERE Activo = 1 AND IdServicio NOT IN ('ADM', 'TIC');
+                        OPEN CURSOR_SERVICE
+                            FETCH NEXT FROM CURSOR_SERVICE INTO @SERV_CODE;
+                                WHILE @@FETCH_STATUS = 0
+                                    BEGIN
+                                        IF NOT EXISTS (SELECT 1 FROM [dbo].[ERP_OrigenPrestacion] WHERE IdCatalogo = ? AND IdPrestacion = ? AND IdAmbito = ? AND IdServicio = @SERV_CODE AND CodCentro = ?)
+                                            BEGIN
+                                                INSERT INTO [dbo].[ERP_OrigenPrestacion] (CodCentro, IdAmbito, IdServicio, IdCatalogo, IdPrestacion, FLeido, Activo) 
+                                                VALUES (?, ?, @SERV_CODE, ?, ?, ?, ?);
+                                            END
+                                        
+                                        FETCH NEXT FROM CURSOR_SERVICE INTO @SERV_CODE;
+                                    END
+                        CLOSE CURSOR_SERVICE;
+                    DEALLOCATE CURSOR_SERVICE;
+                    """
+                     ), params=params
                 )
 
-                for serv_code in services_code_query:
-
-                    # Set parameters
-                    params: tuple = (
-                        prestacion.CodCentro,
-                        prestacion.IdAmbito,
-                        serv_code[0],
-                        prestacion.IdCatalogo if prestacion.IdCatalogo else "CAT01",
-                        prestacion.IdPrestacion,
-                        None,
-                        1,
-                    )
-
-                    # Validation of each prestacion in ERP_Prestacion
-                    check_query: Any = self.sqlserver.execute_select(
-                        (f"SELECT 1 FROM [SINA_interface_ERP].[dbo].[OrigenPrestacion] "
-                         f"WHERE IdCatalogo = ? AND IdPrestacion = ? AND IdAmbito = ? AND IdServicio = ? AND "
-                         f"CodCentro = ?"),
-                        params=(
-                            prestacion.IdCatalogo if prestacion.IdCatalogo else "CAT01",
-                            prestacion.IdPrestacion,
-                            prestacion.IdAmbito,
-                            serv_code[0],
-                            prestacion.CodCentro
-                        )
-                    )
-
-                    # If return 1, that means it exists in ERP_Prestacion
-                    if not check_query:
-                        # Set Insert Query
-                        self.sqlserver.execute_insert(
-                            (
-                                f"INSERT INTO [SINA_interface_ERP].[dbo].[OrigenPrestacion] (CodCentro, IdAmbito, IdServicio, IdCatalogo, IdPrestacion, FLeido, Activo) "
-                                f"VALUES (?, ?, ?, ?, ?, ?, ?)"), params=params
-                        )
-
-                new_origenprestacion.append(prestacion.IdPrestacion)
+                origenprestacion.append(prestacion.IdPrestacion)
 
             # If there is no error with the insert, it commits the transaction
             self.sqlserver.commit()
 
             return {
-                "origenPrestacionStatus": {
-                    "existingOrigenPrestacion": ", ".join(f"'{text}'" for text in existing_origenprestacion),
-                    "newOrigenPrestacion": ", ".join(f"'{text}'" for text in new_origenprestacion)
-                }
+                "origenPrestacion": ", ".join(f"'{text}'" for text in list(set(origenprestacion)))
             }
         except Exception as e:
             self.sqlserver.rollback()

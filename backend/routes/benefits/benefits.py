@@ -20,6 +20,7 @@ router = APIRouter()
     summary="Upload Excel file with benefits data"
 )
 async def upload_benefits_file(
+        environment: str = "PRE",
         file: UploadFile = File(...)
 ) -> Any:
     """
@@ -32,17 +33,20 @@ async def upload_benefits_file(
 
     # Verification of params.
     if file is None:
-        raise_http_error(ErrorCode.UNPROCESSABLE_ENTITY, message="The file param can not be empty. "
-                                                                 "Please, verify and try again.")
+        raise ValueError("The file param can not be empty. "
+                         "Please, verify and try again.")
     if isinstance(file, list):
-        raise_http_error(ErrorCode.REQUEST_VALIDATION_ERROR, message="Upload only one file. "
-                                                                     "Please, verify and try again.")
+        raise ValueError("Upload only one file. "
+                         "Please, verify and try again.")
     if file_path.suffix == ".CSV":
-        raise_http_error(ErrorCode.UNPROCESSABLE_ENTITY, message="At the moment, the APP only support Excels files.")
+        raise ValueError("At the moment, the APP only support Excels files.")
 
     if file_path.suffix != ".xlsx":
-        raise_http_error(ErrorCode.UNPROCESSABLE_ENTITY, message="The file uploaded is not an Excel. Please, "
-                                                                 "verify the file and try again.")
+        raise ValueError("The file uploaded is not an Excel. Please, "
+                         "verify the file and try again.")
+
+    if environment not in ("PRO", "PRE", "CAPA", "DES"):
+        raise ValueError("Environment parameter must be 'PRO' or 'PRE' or 'CAPA' or 'DES'")
 
     try:
         # Check if exists the uploaded file.
@@ -53,6 +57,7 @@ async def upload_benefits_file(
 
         # Set class Benefits
         benefits_upload = BenefitsUpload(
+            environment=environment,
             filename=file.filename
         )
 
@@ -85,7 +90,6 @@ async def get_orma_benefits(
         page: int = 1,
         size: int = 20
 ) -> Any:
-
     try:
         benefits = Benefits(
             benefit_name=benefit_name,

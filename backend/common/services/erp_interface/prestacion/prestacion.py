@@ -71,9 +71,9 @@ class ERPPrestacion:
             query: str = ("SELECT p.IdCatalogo, p.IdPrestacion, p.Descripcion, p.UnidadMedida, p.Duracion, "
                           "f.Descripcion, sf.Descripcion, p.Activo, "
                           "CASE WHEN p.FLeido IS NULL THEN 0 ELSE 1 END AS isRead, p.FLeido "
-                          "FROM [SINA_interface_ERP].[dbo].[Prestacion] p "
-                          "LEFT OUTER JOIN [SINA_interface_ERP].[dbo].[Familia] f ON f.IdFamilia = p.IdFamilia AND f.Activo = 1 "
-                          "LEFT OUTER JOIN [SINA_interface_ERP].[dbo].[Subfamilia] sf ON sf.IdSubfamilia = p.IdSubfamilia AND sf.Activo = 1 "
+                          "FROM [dbo].[ERP_Prestacion] p "
+                          "LEFT OUTER JOIN [dbo].[ERP_Familia] f ON f.IdFamilia = p.IdFamilia AND f.Activo = 1 "
+                          "LEFT OUTER JOIN [dbo].[ERP_Subfamilia] sf ON sf.IdSubfamilia = p.IdSubfamilia AND sf.Activo = 1 "
                           "WHERE p.Activo = ?")
 
             # Set if it's been read or not
@@ -145,56 +145,45 @@ class InsertERPPrestacion:
 
     def insert_prestacion(self):
 
-        existing_prestacion: List[str] = []
-        new_prestacion: List[str] = []
+        prestacion: List[str] = []
 
         try:
             # Begin transaction
             self.sqlserver.begin()
 
-            for prestacion in self.prestacion_body:
+            for erp_prestacion in self.prestacion_body:
                 # Set parameters
                 params: tuple = (
-                    prestacion.IdCatalogo if prestacion.IdCatalogo else "CAT01",
-                    prestacion.IdPrestacion,
-                    prestacion.IdFamilia if prestacion.IdFamilia else "",
-                    prestacion.IdSubfamilia if prestacion.IdSubfamilia else "",
+                    erp_prestacion.IdPrestacion,
+                    erp_prestacion.IdCatalogo if erp_prestacion.IdCatalogo else "CAT01",
+                    erp_prestacion.IdPrestacion,
+                    erp_prestacion.IdFamilia if erp_prestacion.IdFamilia else "",
+                    erp_prestacion.IdSubfamilia if erp_prestacion.IdSubfamilia else "",
                     None,
                     1,
-                    prestacion.Descripcion,
-                    prestacion.UnidadMedida if prestacion.UnidadMedida else "UND",
-                    prestacion.Duracion if prestacion.Duracion else 0
+                    erp_prestacion.Descripcion,
+                    erp_prestacion.UnidadMedida if erp_prestacion.UnidadMedida else "UND",
+                    erp_prestacion.Duracion if erp_prestacion.Duracion else 0
                 )
 
-                # Validation of each prestacion in ERP_Prestacion
-                check_query: Any = self.sqlserver.execute_select(
-                    (f"SELECT 1 FROM [SINA_interface_ERP].[dbo].[Prestacion] "
-                     f"WHERE IdPrestacion = ?"),
-                    params=(
-                        prestacion.IdPrestacion
-                    )
+                # Set Insert Query
+                self.sqlserver.execute_insert(
+                    (f"""IF NOT EXISTS (SELECT 1 FROM [dbo].[ERP_Prestacion] WHERE IdPrestacion = ?)
+                    BEGIN
+                        INSERT INTO [dbo].[ERP_Prestacion] (IdCatalogo, IdPrestacion, IdFamilia, IdSubfamilia, FLeido, Activo, Descripcion, UnidadMedida, Duracion) 
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
+                    END
+                    """
+                     ), params=params
                 )
 
-                # If return 1, that means it exists in ERP_Prestacion
-                if check_query:
-                    existing_prestacion.append(prestacion.IdPrestacion)
-                else:
-                    # Set Insert Query
-                    self.sqlserver.execute_insert(
-                        (f"INSERT INTO [SINA_interface_ERP].[dbo].[Prestacion] (IdCatalogo, IdPrestacion, IdFamilia, IdSubfamilia, FLeido, Activo, Descripcion, UnidadMedida, Duracion) "
-                         f"VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"), params=params
-                    )
-
-                    new_prestacion.append(prestacion.IdPrestacion)
+                prestacion.append(erp_prestacion.IdPrestacion)
 
             # If there is no error with the insert, it commits the transaction
             self.sqlserver.commit()
 
             return {
-                "prestacionStatus": {
-                    "existingPrestacion": ", ".join(f"'{text}'" for text in existing_prestacion),
-                    "newPrestacion": ", ".join(f"'{text}'" for text in new_prestacion)
-                }
+                "prestacion": ", ".join(f"'{text}'" for text in list(set(prestacion)))
             }
         except Exception as e:
             self.sqlserver.rollback()

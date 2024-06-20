@@ -149,6 +149,7 @@ def register_error_logs(file: Any, message: str):
             encoding="utf-8"
     ) as log:
         log.write(
+            f"\n#############################################################################################"
             f"\n{datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")} - {str(Path(file).relative_to(settings.ROOT_PATH)).replace("/", ".")}\n"
             f"{message}\n")
 
