@@ -38,9 +38,6 @@ def create_app():
         logger.info("FastAPI app shutdown...")
 
     app.exception_handler(HTTPException)(custom_http_exception_handler)
-    app.exception_handler(RequestValidationError)(custom_request_validation_error_handler)
-    app.exception_handler(ValidationError)(custom_validation_error_handler)
-    app.exception_handler(Exception)(custom_exception_handler)
 
     app.add_middleware(
         CORSMiddleware,

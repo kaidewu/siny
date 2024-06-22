@@ -8,7 +8,7 @@ import aiofiles.os
 from common.services.benefits.benefits import BenefitsUpload, Benefits
 from common.errors import raise_http_error, ErrorCode
 from fastapi import APIRouter, UploadFile, File
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
 from settings.settings import settings
 
 router = APIRouter()
@@ -25,6 +25,7 @@ async def upload_benefits_file(
 ) -> Any:
     """
     REST API of Benefits where need upload an Excel or CSV file to execute the data loading.
+    :param environment: Environment of SINA
     :param file: An Excel or CSV file to upload
     :return: Return the text of SQL Script or the path where it's located the SQL Script file. Still in development.
     """
@@ -72,6 +73,22 @@ async def upload_benefits_file(
             # If it's true, remove the uploaded file.
             await aiofiles.os.remove(file_path)
 
+
+@router.get(
+    path="/benefits/example/excel",
+    tags=["Example Excel"],
+    summary="Return the Excel for the data loading"
+)
+async def get_benefit_excel():
+    excel_path: Path = Path(settings.RESOURCES_PATH).joinpath("examples/INPUT-EXAMPLE.xlsx")
+
+    if not excel_path.exists() and not excel_path.is_file():
+        raise FileNotFoundError("The Excel doesn't exists. Please, contact to the administrator")
+
+    return FileResponse(
+        path=excel_path,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
 
 @router.get(
     path="/benefits",

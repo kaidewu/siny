@@ -4,7 +4,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 logger = logging.Logger(__name__)
-load_dotenv(Path(__file__).parents[2].joinpath(".env"))
+load_dotenv(Path(__file__).parents[1].joinpath(".env"))
 
 
 def load_str_env(name: str, required: bool = False) -> str:
@@ -42,10 +42,8 @@ class Settings:
         # APP Information
         self.APP_NAME: str = "sinasuite-dl"
         self.ROOT_PATH: Path = Path("../").resolve()
-
-        if not Path("../backend/temp/").exists():
-            Path("../backend/temp/").mkdir()
-
+        #if not Path("../backend/temp/").exists():
+        #    Path("../backend/temp/").mkdir()
         self.TEMP_PATH: Path = Path("../backend/temp/")
         self.RESOURCES_PATH: Path = Path("../backend/resources/")
         self.ERROR_LOG_PATH: Path = Path("../backend/common/errors/logs")

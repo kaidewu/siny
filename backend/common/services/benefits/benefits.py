@@ -38,26 +38,35 @@ class BenefitsUpload:
 
             # Validation that required field are not NULL
             if pandas.isna(row["Codigo Prestacion"]):
-                raise Exception("Codigo Prestacion can't no be empty")
+                raise Exception("Codigo Prestacion in the row {index} can't no be empty")
 
             if pandas.isna(row["Nombre Prestacion"]):
-                raise Exception("Nombre Prestacion can't no be empty")
+                raise Exception("Nombre Prestacion in the row {index} can't no be empty")
 
             if pandas.isna(row["Servicio"]):
-                raise Exception("Servicio can't no be empty")
+                raise Exception("Servicio in the row {index} can't no be empty")
 
             if pandas.isna(row["Ambito"]):
-                raise Exception("Ambito can't no be empty")
+                raise Exception("Ambito in the row {index} can't no be empty")
 
             service_query: Any = self.sqlserver.execute_select(
-                "SELECT s.IdServicio FROM [SINA_interface_ERP].[dbo].[Servicio] s "
+                "SELECT s.IdServicio FROM [sinasuite].[dbo].[ERP_Servicio] s "
                 "WHERE s.Activo = 1 AND CAST(s.Descripcion AS NVARCHAR(MAX)) = ?", params=str(row["Servicio"])
             )
 
             if not service_query:
-                raise Exception(f"The service {str(row["Servicio"])} doesn't exists. Please, verify and try again.")
+                raise Exception(f"The service {str(row['Servicio'])} in the row {index} doesn't exists. Please, verify and try again.")
 
             service_code: str = str(service_query[0][0])
+
+            if not pandas.isna(row["Unidad Medida"]):
+                unit_validation: Any = self.sqlserver.execute_select(
+                    "SELECT 1 FROM [sinasuite].[dbo].[PARA_MEASUREMENT_UNITS] "
+                    "WHERE MEUN_DELETED = 0 AND MEUN_CODE = ?", params=str(row["Unidad Medida"])
+                )
+
+                if not unit_validation:
+                    raise ValueError(f"The column 'Unidad Medida' in the row {index} doesn't exists. Please, verify and try again.")
 
             # Set each Model with the Excel data
             # Creation of ERP_Prestacion JSON
@@ -71,7 +80,7 @@ class BenefitsUpload:
                         "Descripcion": str(row["Nombre Prestacion"]),
                         "UnidadMedida": str(row["Unidad Medida"]) if not pandas.isna(
                             row["Unidad Medida"]) else None,
-                        "Duracion": int(row["Duracion"]) if not pandas.isna(row["Duracion"]) else None,
+                        "Duracion": int(row["Duracion"]) if not pandas.isna(row["Duracion"]) else 0,
                     }
                 )
             )
@@ -87,7 +96,11 @@ class BenefitsUpload:
                 for center in centers_query:
                     centers_code.append(str(center[0]))
             else:
-                centers_code.append(str(row["Centro"]))
+                centers_query: Any = self.sqlserver.execute_select(
+                    "SELECT oc.CENT_CODE FROM [sinasuite].[dbo].[ORMA_CENTERS] oc "
+                    "WHERE oc.CENT_DELETED = 0 AND oc.CENT_EXTERNAL = 0 AND oc.CENT_NAME = ?", params=str(row["Centro"])
+                )
+                centers_code.append(str(centers_query[0][0]))
 
             for center_code in centers_code:
                 erp_prestacionservicio_json.append(
@@ -97,11 +110,11 @@ class BenefitsUpload:
                             "IdPrestacion": str(row["Codigo Prestacion"]),
                             "IdServicio": service_code,
                             "Agendable": True,
-                            "Duracion": int(row["Duracion"]) if not pandas.isna(row["Duracion"]) else None,
+                            "Duracion": int(row["Duracion"]) if not pandas.isna(row["Duracion"]) else 0,
                             "CodCentro": center_code,
                             "Departamental": str(row["Codigo Prestacion"]),
                             "Incremento": int(row["Duracion"]) + 10 if not pandas.isna(
-                                row["Duracion"]) else None,
+                                row["Duracion"]) else 0,
                             "Decremento": int(10)
                         }
                     )
@@ -137,31 +150,32 @@ class BenefitsUpload:
         from common.services.erp_interface.origen_prestacion.origen_prestacion import InsertERPOrigenPrestacion
 
         erp_prestacion_json, erp_prestacionservicio_json, erp_origenprestacion_json = self._to_erp_interface_json()
+        returns_codes: Dict = {}
 
         insert_erp_prestacion = InsertERPPrestacion(
             prestacion_body=erp_prestacion_json
         )
 
+        returns_codes.update(insert_erp_prestacion.insert_prestacion())
+
         insert_erp_prestacionservicio = InsertERPPrestacionServicio(
             prestacionservicio_body=erp_prestacionservicio_json
         )
+
+        returns_codes.update(insert_erp_prestacionservicio.insert_prestacionservicio())
 
         insert_erp_origenprestacion = InsertERPOrigenPrestacion(
             origenprestacion_body=erp_origenprestacion_json
         )
 
-        returns_codes: List = [
-            insert_erp_prestacion.insert_prestacion(),
-            insert_erp_prestacionservicio.insert_prestacionservicio(),
-            insert_erp_origenprestacion.insert_origenprestacion()
-        ]
+        returns_codes.update(insert_erp_origenprestacion.insert_origenprestacion())
 
         if self.environment != "PRO":
             try:
                 self.sqlserver.begin()
 
                 self.sqlserver.execute_procedures(
-                    Path(settings.RESOURCES_PATH).joinpath("stored procedures/PROC_GET_NAV_BENEFITS.sql").read_text().replace("{values_idprestaciones}", returns_codes[0].get("prestacion"))
+                    Path(settings.RESOURCES_PATH).joinpath("stored procedures/PROC_GET_NAV_BENEFITS.sql").read_text().replace("{values_idprestaciones}", returns_codes.get("prestacion"))
                 )
             except Exception as e:
                 self.sqlserver.rollback()

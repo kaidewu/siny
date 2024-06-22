@@ -1,6 +1,7 @@
 import logging
 import zipfile
 import traceback
+from uuid import uuid4, UUID
 from typing import Any
 from enum import Enum
 from pathlib import Path
@@ -61,6 +62,7 @@ assert len(error_messages) == len(ErrorCode)
 
 error_system = {
     "SystemExit": "INTERNAL_SERVER_ERROR",
+    "ValidationError": "INTERNAL_SERVER_ERROR",
     "KeyboardInterrupt": "CLIENT_CLOSED_REQUEST",
     "GeneratorExit": "INTERNAL_SERVER_ERROR",
     "Exception": "INTERNAL_SERVER_ERROR",
@@ -124,38 +126,44 @@ error_system = {
 }
 
 
-def register_error_logs(file: Any, message: str):
+def register_error_logs(file: Any, message: str, uuid: UUID):
     # Check if exists the Logs folder
     if not Path(settings.ERROR_LOG_PATH).exists():
         Path(settings.ERROR_LOG_PATH).mkdir()
 
-    if Path(settings.ERROR_LOG_PATH).joinpath(f"{datetime.now().strftime("%Y-%m-%d")}-sinasuite-dl.log").exists():
+    if (Path(settings.ERROR_LOG_PATH).joinpath(
+                f"{(datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")}-sinasuite-dl.log").exists()
+    and Path(settings.ERROR_LOG_PATH).joinpath(f"{(datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")}-sinasuite-dl.log").is_file()):
         with zipfile.ZipFile(
-                Path(settings.ERROR_LOG_PATH).joinpath(f"{datetime.now().strftime("%Y-%m-%d")}-sinasuite-dl.zip"),
+                Path(settings.ERROR_LOG_PATH).joinpath(
+                    f"{(datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")}-sinasuite-dl.zip"),
                 "w",
                 zipfile.ZIP_DEFLATED
         ) as zipf:
             zipf.write(
-                Path(settings.ERROR_LOG_PATH).joinpath(f"{datetime.now().strftime("%Y-%m-%d")}-sinasuite-dl.log"),
-                arcname=
-                Path(settings.ERROR_LOG_PATH).joinpath(f"{datetime.now().strftime("%Y-%m-%d")}-sinasuite-dl.log").split("/")[-1]
+                Path(settings.ERROR_LOG_PATH).joinpath(
+                    f"{(datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")}-sinasuite-dl.log")
             )
+        Path(settings.ERROR_LOG_PATH.resolve()).joinpath(
+            f"{(datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")}-sinasuite-dl.log").unlink()
 
     # Log the error into a file
     with open(
             Path(settings.ERROR_LOG_PATH).joinpath(
-                f"{(datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")}-sinasuite-dl.log"),
+                f"{datetime.now().strftime("%Y-%m-%d")}-sinasuite-dl.log"),
             "a",
             encoding="utf-8"
     ) as log:
         log.write(
             f"\n#############################################################################################"
-            f"\n{datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")} - {str(Path(file).relative_to(settings.ROOT_PATH)).replace("/", ".")}\n"
+            f"\n{datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")} - {str(Path(file).relative_to(settings.ROOT_PATH)).replace("/", ".")} - {uuid}\n"
             f"{message}\n")
 
 
 def raise_http_error(file: Any, sys_traceback: Any):
     exc_type, exc_value, exc_traceback = sys_traceback
+
+    uuid_code: UUID = uuid4()
 
     # Resume: A short summary of the traceback
     resume: str = "".join(traceback.format_exception_only(exc_type, exc_value)).strip().replace(f"{exc_type.__name__}: ", "")
@@ -164,10 +172,11 @@ def raise_http_error(file: Any, sys_traceback: Any):
     body: str = "".join(traceback.format_exception(exc_type, exc_value, exc_traceback)).strip()
 
     logger.error(resume)
+    print(exc_type.__name__)
 
-    register_error_logs(file=file, message=body)
+    register_error_logs(file=file, message=body, uuid=uuid_code)
 
     raise HTTPException(
         status_code=error_messages[ErrorCode[error_system.get(exc_type.__name__)]]["status_code"],
-        detail={"error_code": ErrorCode[error_system.get(exc_type.__name__)], "message": resume},
+        detail={"uuid": uuid_code, "message": resume},
     )

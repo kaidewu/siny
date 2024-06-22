@@ -66,13 +66,13 @@ class ERPOrigenPrestacion:
                 "SELECT op.IdCatalogo, op.IdPrestacion, p.Descripcion, oa.AMBI_DESCRIPTION_ES, os.SERV_DESCRIPTION_ES, "
                 "oc.CENT_NAME, p.UnidadMedida, op.Activo, "
                 "CASE WHEN op.FLeido IS NULL THEN 0 ELSE 1 END AS isRead, op.FLeido "
-                "FROM [dbo].[ERP_OrigenPrestacion] op "
-                "LEFT OUTER JOIN [dbo].[ERP_Prestacion] p ON p.IdPrestacion = op.IdPrestacion AND p.Activo = 1 "
-                "LEFT OUTER JOIN [dbo].[ORMA_AMBITS] oa ON oa.AMBI_CODE COLLATE Modern_Spanish_CI_AS = op.IdAmbito "
+                "FROM [sinasuite].[dbo].[ERP_OrigenPrestacion] op "
+                "LEFT OUTER JOIN [sinasuite].[dbo].[ERP_Prestacion] p ON p.IdPrestacion = op.IdPrestacion AND p.Activo = 1 "
+                "LEFT OUTER JOIN [sinasuite].[dbo].[ORMA_AMBITS] oa ON oa.AMBI_CODE COLLATE Modern_Spanish_CI_AS = op.IdAmbito "
                 "AND oa.AMBI_DELETED = 0 "
-                "LEFT OUTER JOIN [dbo].[ORMA_CENTERS] oc ON oc.CENT_CODE COLLATE Modern_Spanish_CI_AS = op.CodCentro "
+                "LEFT OUTER JOIN [sinasuite].[dbo].[ORMA_CENTERS] oc ON oc.CENT_CODE COLLATE Modern_Spanish_CI_AS = op.CodCentro "
                 "AND oc.CENT_DELETED = 0 AND oc.CENT_EXTERNAL = 0 "
-                "LEFT OUTER JOIN [dbo].[ORMA_SERVICES] os ON os.SERV_CODE COLLATE Modern_Spanish_CI_AS = op.IdServicio AND os.SERV_DELETED = 0 "
+                "LEFT OUTER JOIN [sinasuite].[dbo].[ORMA_SERVICES] os ON os.SERV_CODE COLLATE Modern_Spanish_CI_AS = op.IdServicio AND os.SERV_DELETED = 0 "
                 "WHERE op.Activo = ?")
 
             # Set if it's been read or not
@@ -160,14 +160,14 @@ class InsertERPOrigenPrestacion:
                 self.sqlserver.execute_insert(
                     (f"""DECLARE @SERV_CODE NVARCHAR(20)
                     DECLARE CURSOR_SERVICE CURSOR FOR
-                        SELECT IdServicio FROM [dbo].[ERP_Servicio] WHERE Activo = 1 AND IdServicio NOT IN ('ADM', 'TIC');
+                        SELECT IdServicio FROM [sinasuite].[dbo].[ERP_Servicio] WHERE Activo = 1 AND IdServicio NOT IN ('ADM', 'TIC');
                         OPEN CURSOR_SERVICE
                             FETCH NEXT FROM CURSOR_SERVICE INTO @SERV_CODE;
                                 WHILE @@FETCH_STATUS = 0
                                     BEGIN
-                                        IF NOT EXISTS (SELECT 1 FROM [dbo].[ERP_OrigenPrestacion] WHERE IdCatalogo = ? AND IdPrestacion = ? AND IdAmbito = ? AND IdServicio = @SERV_CODE AND CodCentro = ?)
+                                        IF NOT EXISTS (SELECT 1 FROM [sinasuite].[dbo].[ERP_OrigenPrestacion] WHERE IdCatalogo = ? AND IdPrestacion = ? AND IdAmbito = ? AND IdServicio = @SERV_CODE AND CodCentro = ?)
                                             BEGIN
-                                                INSERT INTO [dbo].[ERP_OrigenPrestacion] (CodCentro, IdAmbito, IdServicio, IdCatalogo, IdPrestacion, FLeido, Activo) 
+                                                INSERT INTO [sinasuite].[dbo].[ERP_OrigenPrestacion] (CodCentro, IdAmbito, IdServicio, IdCatalogo, IdPrestacion, FLeido, Activo) 
                                                 VALUES (?, ?, @SERV_CODE, ?, ?, ?, ?);
                                             END
                                         

@@ -71,9 +71,9 @@ class ERPPrestacion:
             query: str = ("SELECT p.IdCatalogo, p.IdPrestacion, p.Descripcion, p.UnidadMedida, p.Duracion, "
                           "f.Descripcion, sf.Descripcion, p.Activo, "
                           "CASE WHEN p.FLeido IS NULL THEN 0 ELSE 1 END AS isRead, p.FLeido "
-                          "FROM [dbo].[ERP_Prestacion] p "
-                          "LEFT OUTER JOIN [dbo].[ERP_Familia] f ON f.IdFamilia = p.IdFamilia AND f.Activo = 1 "
-                          "LEFT OUTER JOIN [dbo].[ERP_Subfamilia] sf ON sf.IdSubfamilia = p.IdSubfamilia AND sf.Activo = 1 "
+                          "FROM [sinasuite].[dbo].[ERP_Prestacion] p "
+                          "LEFT OUTER JOIN [sinasuite].[dbo].[ERP_Familia] f ON f.IdFamilia = p.IdFamilia AND f.Activo = 1 "
+                          "LEFT OUTER JOIN [sinasuite].[dbo].[ERP_Subfamilia] sf ON sf.IdSubfamilia = p.IdSubfamilia AND sf.Activo = 1 "
                           "WHERE p.Activo = ?")
 
             # Set if it's been read or not
@@ -168,9 +168,9 @@ class InsertERPPrestacion:
 
                 # Set Insert Query
                 self.sqlserver.execute_insert(
-                    (f"""IF NOT EXISTS (SELECT 1 FROM [dbo].[ERP_Prestacion] WHERE IdPrestacion = ?)
+                    (f"""IF NOT EXISTS (SELECT 1 FROM [sinasuite].[dbo].[ERP_Prestacion] WHERE IdPrestacion = ?)
                     BEGIN
-                        INSERT INTO [dbo].[ERP_Prestacion] (IdCatalogo, IdPrestacion, IdFamilia, IdSubfamilia, FLeido, Activo, Descripcion, UnidadMedida, Duracion) 
+                        INSERT INTO [sinasuite].[dbo].[ERP_Prestacion] (IdCatalogo, IdPrestacion, IdFamilia, IdSubfamilia, FLeido, Activo, Descripcion, UnidadMedida, Duracion) 
                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
                     END
                     """

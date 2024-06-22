@@ -1,4 +1,76 @@
-# sinasuite-dl
-Webapp for data loading in SINASUITE
+# SinaSuite-dl
+Webapp for data loading in SINASUITE.
 
-It works with Microsoft ODBC 17 for SQL SERVER[https://learn.microsoft.com/en-us/sql/connect/odbc/download-odbc-driver-for-sql-server?view=sql-server-ver16]
+# Getting Started
+### Prerequisites
+1. Download [Python](https://www.python.org/downloads/release/python-3120/?ref=upstract.com) (version 3.12 is recommended)
+    
+    - On Windows 11:
+        ```powershell
+        winget install Python.Python.3.12
+        ```
+    
+    - On Linux:
+        ```bash
+        sudo apt-get install python3.12 python3.12-venv
+        ```
+
+2. Download [Microsoft ODBC 17 for SQL SERVER](https://learn.microsoft.com/en-us/sql/connect/odbc/download-odbc-driver-for-sql-server?view=sql-server-ver16)
+
+    - On Windows 11, download [Here]((https://learn.microsoft.com/en-us/sql/connect/odbc/download-odbc-driver-for-sql-server?view=sql-server-ver16))
+
+    - On Linux:
+        ```bash
+        sudo apt-get update && apt-get install -y --no-install-recommends curl gnupg unixodbc-dev unixodbc
+        ```
+        
+        ```bash
+        curl -sSL https://packages.microsoft.com/keys/microsoft.asc | apt-key add - && \
+        curl -sSL https://packages.microsoft.com/config/debian/10/prod.list > /etc/apt/sources.list.d/mssql-release.list
+        ```
+      
+        ```bash
+        sudo apt-get update && ACCEPT_EULA=Y apt-get install -y msodbcsql17
+        ```
+
+3. Download [Docker Desktop](https://docs.docker.com/desktop/install/windows-install/) and [Docker Compose](https://docs.docker.com/compose/install/). *Need Restart PC
+
+    - On Windows 11:
+        ```powershell
+        winget install Docker.DockerDesktop Docker.DockerCompose
+        ```
+    
+    - On Linux:
+        ```bash
+        sudo apt-get install docker docker-compose docker-compose-plugin
+        ```
+
+4. Download [Git](https://git-scm.com/download/win)
+
+    - On Windows 11:
+        ```powershell
+        winget install Git.Git
+        ```
+    
+    - On Linux:
+        ```bash
+        sudo apt-get install git
+        ```
+
+### Setting up the project
+1. Clone the Github repository:
+
+```bash
+git clone https://github.com/kaidewu/sinasuite-dl.git
+cd sinasuite-dl
+```
+
+2. Build and run the Docker containers using Docker Compose:
+
+```bash
+docker-compose up --build
+```
+
+3. Access the application:
+
+   - Open your browser and go to http://localhost:3000.

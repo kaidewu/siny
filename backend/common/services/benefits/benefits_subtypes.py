@@ -53,7 +53,7 @@ class BenefitSubtypes:
         query: str = ("SELECT obs.BEST_DESCRIPTION_ES, obs.BEST_CODE, obs.BEST_DELETED, obs.BEST_DELETED_DATE, "
                       "obt.BETY_DESCRIPTION_ES, obt.BETY_CODE "
                       "FROM [sinasuite].[dbo].[ORMA_BENEFIT_SUBTYPES] obs "
-                      "INNER JOIN ORMA_BENEFIT_TYPES obt ON obt.BETY_ID = obs.BETY_ID AND obt.BETY_DELETED = 0 "
+                      "INNER JOIN [sinasuite].[dbo].[ORMA_BENEFIT_TYPES] obt ON obt.BETY_ID = obs.BETY_ID AND obt.BETY_DELETED = 0 "
                       "WHERE obs.BEST_DELETED = ?")
 
         if self.benefit_type_code:
@@ -112,9 +112,9 @@ class BenefitSubtypesCreation:
                 )
 
                 self.sqlserver.execute_insert(
-                    (f"IF NOT EXISTS (SELECT 1 FROM [dbo].[ERP_Subfamilia] WHERE IdSubfamilia = ? AND IdFamilia = ?)"
+                    (f"IF NOT EXISTS (SELECT 1 FROM [sinasuite].[dbo].[ERP_Subfamilia] WHERE IdSubfamilia = ? AND IdFamilia = ?)"
                      f"BEGIN "
-                     f"INSERT INTO [dbo].[ERP_Subfamilia] (IdSubfamilia, Descripcion, IdFamilia, Servicio, Activo, FLeido, Codtipo) "
+                     f"INSERT INTO [sinasuite].[dbo].[ERP_Subfamilia] (IdSubfamilia, Descripcion, IdFamilia, Servicio, Activo, FLeido, Codtipo) "
                      f"VALUES (?, ?, ?, ?, ?, ?, (SELECT CodTipo FROM [dbo].[ERP_Familia] WHERE IdFamilia = ?)); "
                      f"END"), params=params
                 )
