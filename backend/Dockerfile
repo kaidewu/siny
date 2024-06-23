@@ -33,5 +33,7 @@ RUN pip install --no-cache-dir -r /sinasuite-dl/requirements.txt
 # Copy the rest of the application code into the container at /app
 COPY . /sinasuite-dl/
 
+EXPOSE 8080
+
 # Run the application
 CMD ["python", "main.py"]

@@ -8,24 +8,24 @@ const Home: React.FC = () => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4">
       <div
-        className="p-8 border rounded hover:scale-105 transition-transform cursor-pointer font-bold text-center text-xl"
+        className="p-8 border-4 border-gray-300 rounded hover:border-gray-500 hover:scale-105 transition-transform cursor-pointer font-bold text-center text-xl text-gray-700"
         onClick={() => navigate('/prestacion')}
       >
         Prestacion
       </div>
       <div
-        className="p-8 border rounded hover:scale-105 transition-transform cursor-pointer font-bold text-center text-xl"
-        onClick={() => navigate('/benefits')}
+        className="p-8 border-4 border-gray-300 rounded hover:border-gray-500 hover:scale-105 transition-transform cursor-pointer font-bold text-center text-xl text-gray-700"
+        onClick={() => navigate('/forms')}
       >
-        Benefits (Not implemented)
+        Formularios
       </div>
       <div
-        className="p-8 border rounded hover:scale-105 transition-transform cursor-pointer font-bold text-center text-xl"
+        className="p-8 border-4 border-gray-300 rounded hover:border-gray-500 hover:scale-105 transition-transform cursor-pointer font-bold text-center text-xl text-gray-700"
         onClick={() => navigate('#')}
       >
         Coming Soon...
       </div>
-      <div className="p-8 border rounded transition-transform text-center">
+      <div className="p-8 border-4 border-gray-300 rounded transition-transform text-center">
         <TextSeparatorTool />
       </div>
     </div>

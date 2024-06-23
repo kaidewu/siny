@@ -1,10 +1,10 @@
 import React from 'react';
 
-interface ResponseBoxProps {
+interface BenefitsResponseBoxProps {
   response: Record<string, any> | null;
 }
 
-const ResponseBox: React.FC<ResponseBoxProps> = ({ response }) => {
+const BenefitsResponseBox: React.FC<BenefitsResponseBoxProps> = ({ response }) => {
 
   let codes = ""
 
@@ -27,4 +27,4 @@ const ResponseBox: React.FC<ResponseBoxProps> = ({ response }) => {
   );
 };
 
-export default ResponseBox;
+export default BenefitsResponseBox;

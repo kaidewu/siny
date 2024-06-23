@@ -6,9 +6,9 @@ import '../index.css';
 import Alert from './Alert';
 import DragAndDrop from './DragAndDrop';
 import Button from './Button';
-import BenefitsResponseBox from './BenefitsResponseBox';
+import FormsResponseBox from './FormsResponseBox';
 
-const Prestacion: React.FC = () => {
+const Forms: React.FC = () => {
   const [alert, setAlert] = useState<{ type: 'success' | 'error', message: string, code?: string } | null>(null);
   const [apiResponse, setApiResponse] = useState<Record<string, any> | null>(null);
   const [file, setFile] = useState<File | null>(null);
@@ -41,7 +41,7 @@ const Prestacion: React.FC = () => {
 
   const handleDownloadExcel = async () => {
     try {
-      const response = await fetch('http://localhost:8080/api/v1/benefits/example/excel');
+      const response = await fetch('http://localhost:8080/api/v1/forms/foin/configurations/example/excel');
       if (!response.ok) {
         const errorData = await response.json();
         throw errorData;
@@ -72,7 +72,7 @@ const Prestacion: React.FC = () => {
       formData.append('file', file);
 
       // Simulating sending file to API
-      const response = await fetch('http://localhost:8080/api/v1/create/benefits/upload?environment=PRE', {
+      const response = await fetch('http://localhost:8080/api/v1/forms/foin/configurations/upload', {
         method: 'POST',
         body: formData,
       });
@@ -120,7 +120,7 @@ const Prestacion: React.FC = () => {
         <div className="flex justify-end mb-4">
           <Button onClick={handleSendToApi}>GO</Button>
         </div>
-        <BenefitsResponseBox response={apiResponse} />
+        <FormsResponseBox response={apiResponse} />
         <div className="flex justify-end my-4">
           <Button onClick={handleCopyResponse}>Copy</Button>
         </div>
@@ -132,4 +132,4 @@ const Prestacion: React.FC = () => {
   );
 };
 
-export default Prestacion;
+export default Forms;

@@ -16,5 +16,7 @@ RUN pnpm install
 # Copy the rest of the application code into the container
 COPY . /sinasuite-dl
 
+EXPOSE 3000
+
 # Start the React application
 CMD ["pnpm", "start"]

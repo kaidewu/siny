@@ -76,11 +76,11 @@ async def upload_benefits_file(
 
 @router.get(
     path="/benefits/example/excel",
-    tags=["Example Excel"],
-    summary="Return the Excel for the data loading"
+    tags=["Example Excel benefits"],
+    summary="Return the Excel for the data loading for benefits"
 )
 async def get_benefit_excel():
-    excel_path: Path = Path(settings.RESOURCES_PATH).joinpath("examples/INPUT-EXAMPLE.xlsx")
+    excel_path: Path = Path(settings.RESOURCES_PATH).joinpath("examples/CARGA PRESTACION.xlsx")
 
     if not excel_path.exists() and not excel_path.is_file():
         raise FileNotFoundError("The Excel doesn't exists. Please, contact to the administrator")
