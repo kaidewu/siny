@@ -48,7 +48,7 @@ class Settings:
         self.RESOURCES_PATH: Path = Path("../backend/resources/")
         self.ERROR_LOG_PATH: Path = Path("../backend/common/errors/logs")
         self.API_ROUTE_PREFIX: str = "/api/v1"
-        self.HOST: str = "localhost"  # It can be your local IP
+        self.HOST: str = "0.0.0.0"  # It can be your local IP
         self.SERVICE_PORT: int = 8080
 
         self.HELLOWORLD_HTML: Path = Path("../backend/resources/templates/helloworld.html")
