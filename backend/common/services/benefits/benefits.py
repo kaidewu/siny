@@ -79,7 +79,7 @@ class BenefitsUpload:
                         "IdSubfamilia": str(row["Codigo Subfamilia"]),
                         "Descripcion": str(row["Nombre Prestacion"]),
                         "UnidadMedida": str(row["Unidad Medida"]) if not pandas.isna(
-                            row["Unidad Medida"]) else None,
+                            row["Unidad Medida"]) else "UND",
                         "Duracion": int(row["Duracion"]) if not pandas.isna(row["Duracion"]) else 0,
                     }
                 )
