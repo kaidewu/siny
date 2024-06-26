@@ -18,6 +18,7 @@ router = APIRouter()
     summary="Data loading configurations to FOIN_CONF_CONFIGURATIONS and FOIN_CONF_FORMS_LANGUAGES"
 )
 async def upload_foin_configurations(
+        environment: str = "PRE",
         file: UploadFile = File(...)
 ) -> Any:
     file_path: Path = Path(settings.TEMP_PATH).joinpath(file.filename)
@@ -44,7 +45,7 @@ async def upload_foin_configurations(
 
         foin_configurations_upload = FoinConfigurationUpload(
             file_path=file_path,
-            filename=file.filename
+            environment=environment
         )
 
         return JSONResponse(

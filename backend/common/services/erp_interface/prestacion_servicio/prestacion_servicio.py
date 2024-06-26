@@ -167,16 +167,28 @@ class InsertERPPrestacionServicio:
         prestacioneservicio: List[str] = []
 
         try:
-            # Begin transaction
-            self.sqlserver.begin()
-
             for prestacion in self.prestacionservicio_body:
                 # Set parameters
-                params: tuple = (
-                    prestacion.IdCatalogo if prestacion.IdCatalogo else "CAT01",
-                    prestacion.IdPrestacion,
-                    prestacion.IdServicio,
-                    prestacion.CodCentro,
+                params_delete: tuple = tuple(filter(
+                    lambda delete: delete is not None, (
+                        prestacion.IdCatalogo if prestacion.IdCatalogo else "CAT01",
+                        prestacion.IdPrestacion,
+                        prestacion.IdServicio,
+                        prestacion.CodCentro if prestacion.CodCentro else None
+                    )
+                ))
+                query_delete: str = ("DELETE FROM [sinasuite].[dbo].[ERP_PrestacionServicio] WHERE IdCatalogo = ? "
+                                     "AND IdPrestacion = ? AND IdServicio = ? AND Activo = 1")
+
+                if prestacion.CodCentro:
+                    query_delete += " AND CodCentro = ?"
+
+                self.sqlserver.execute_insert(
+                    query_delete, params=params_delete
+                )
+
+                # Set parameters
+                params_insert: tuple = (
                     prestacion.IdCatalogo if prestacion.IdCatalogo else "CAT01",
                     prestacion.IdPrestacion,
                     prestacion.IdServicio,
@@ -192,22 +204,18 @@ class InsertERPPrestacionServicio:
 
                 # Set Insert Query
                 self.sqlserver.execute_insert(
-                    (f"IF NOT EXISTS (SELECT 1 FROM [sinasuite].[dbo].[ERP_PrestacionServicio] WHERE IdCatalogo = ? AND IdPrestacion = ? AND IdServicio = ? AND CodCentro = ? )\n"
-                     f"BEGIN\n"
-                     f"INSERT INTO [sinasuite].[dbo].[ERP_PrestacionServicio] (IdCatalogo, IdPrestacion, IdServicio, FLeido, Activo, Agendable, Duracion, Codcentro, Departamental, Incremento, Decremento) "
-                     f"VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?); \n"
-                     f"END\n"
-                     ), params=params
+                    ("INSERT INTO [dbo].[ERP_PrestacionServicio] (IdCatalogo, IdPrestacion, IdServicio, FLeido, Activo, Agendable, Duracion, Codcentro, Departamental, Incremento, Decremento) "
+                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);"
+                     ), params=params_insert
                 )
 
                 prestacioneservicio.append(prestacion.IdPrestacion)
 
-            # If there is no error with the insert, it commits the transaction
+            # Commits
             self.sqlserver.commit()
 
             return {
                 "prestacionServicio": ", ".join(f"'{text}'" for text in list(set(prestacioneservicio)))
             }
         except Exception as e:
-            self.sqlserver.rollback()
             raise Exception(str(e))

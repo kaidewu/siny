@@ -148,9 +148,6 @@ class InsertERPPrestacion:
         prestacion: List[str] = []
 
         try:
-            # Begin transaction
-            self.sqlserver.begin()
-
             for erp_prestacion in self.prestacion_body:
                 # Set parameters
                 params: tuple = (
@@ -168,9 +165,9 @@ class InsertERPPrestacion:
 
                 # Set Insert Query
                 self.sqlserver.execute_insert(
-                    (f"""IF NOT EXISTS (SELECT 1 FROM [sinasuite].[dbo].[ERP_Prestacion] WHERE IdPrestacion = ?)
+                    (f"""IF NOT EXISTS (SELECT 1 FROM [dbo].[ERP_Prestacion] WHERE IdPrestacion = ?)
                     BEGIN
-                        INSERT INTO [sinasuite].[dbo].[ERP_Prestacion] (IdCatalogo, IdPrestacion, IdFamilia, IdSubfamilia, FLeido, Activo, Descripcion, UnidadMedida, Duracion) 
+                        INSERT INTO [dbo].[ERP_Prestacion] (IdCatalogo, IdPrestacion, IdFamilia, IdSubfamilia, FLeido, Activo, Descripcion, UnidadMedida, Duracion) 
                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
                     END
                     """
@@ -179,13 +176,12 @@ class InsertERPPrestacion:
 
                 prestacion.append(erp_prestacion.IdPrestacion)
 
-            # If there is no error with the insert, it commits the transaction
+            # Commits
             self.sqlserver.commit()
 
             return {
                 "prestacion": ", ".join(f"'{text}'" for text in list(set(prestacion)))
             }
         except Exception as e:
-            self.sqlserver.rollback()
             raise Exception(str(e))
 

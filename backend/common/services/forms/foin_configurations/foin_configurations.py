@@ -12,12 +12,13 @@ logger = logging.Logger(__name__)
 class FoinConfigurationUpload:
     def __init__(
             self,
-            filename: str,
-            file_path: Path
+            file_path: Path,
+            environment: str = "PRE"
     ) -> None:
         self.sqlserver: Any = sqlserver
         self.excel_read: DataFrame = pandas.read_excel(Path(file_path).resolve(), sheet_name="HOJA FORMULARIO")
         self.data_json: List[FoinConfigurationUploadModel] = []
+        self.environment: str  = environment
 
         for index, row in self.excel_read.iterrows():
             # Declares of variables
@@ -176,7 +177,13 @@ class FoinConfigurationUpload:
                     params=str(row["Formulario"])
                 )
                 if not form_query:
-                    raise ValueError(f"Line {index}: The form: 'Formulario' not exists.")
+                    if self.environment == "PRO":
+                        raise ValueError(f"Line {index}: The form: 'Formulario' not exists.")
+                    else:
+                        self.sqlserver.execute_insert(
+                            "INSERT INTO [dbo].[FORM_FORMS] VALUES (?, 0, 0, 4, 1, 1);",
+                            params=str(row["Formulario"])
+                        )
 
                 form_id = int(form_query[0][0])
 

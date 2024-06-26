@@ -86,39 +86,31 @@ class BenefitsUpload:
             )
 
             # Creation of ERP_PrestacionServicio JSON
-            centers_code: List = []
+            center_code: str = ""
 
-            if pandas.isna(row["Centro"]):
-                centers_query: Any = self.sqlserver.execute_select(
-                    "SELECT oc.CENT_CODE FROM [sinasuite].[dbo].[ORMA_CENTERS] oc "
-                    "WHERE oc.CENT_DELETED = 0 AND oc.CENT_EXTERNAL = 0 AND 1=?", params=1
-                )
-                for center in centers_query:
-                    centers_code.append(str(center[0]))
-            else:
+            if not pandas.isna(row["Centro"]):
                 centers_query: Any = self.sqlserver.execute_select(
                     "SELECT oc.CENT_CODE FROM [sinasuite].[dbo].[ORMA_CENTERS] oc "
                     "WHERE oc.CENT_DELETED = 0 AND oc.CENT_EXTERNAL = 0 AND oc.CENT_NAME = ?", params=str(row["Centro"])
                 )
-                centers_code.append(str(centers_query[0][0]))
+                center_code = str(centers_query[0][0])
 
-            for center_code in centers_code:
-                erp_prestacionservicio_json.append(
-                    PrestacionServicioModel(**
-                        {
-                            "IdCatalogo": str(row["Catalogo"]) if not pandas.isna(row["Catalogo"]) else None,
-                            "IdPrestacion": str(row["Codigo Prestacion"]),
-                            "IdServicio": service_code,
-                            "Agendable": True,
-                            "Duracion": int(row["Duracion"]) if not pandas.isna(row["Duracion"]) else 0,
-                            "CodCentro": center_code,
-                            "Departamental": str(row["Codigo Prestacion"]),
-                            "Incremento": int(row["Duracion"]) + 10 if not pandas.isna(
-                                row["Duracion"]) else 0,
-                            "Decremento": int(10)
-                        }
-                    )
+            erp_prestacionservicio_json.append(
+                PrestacionServicioModel(**
+                    {
+                        "IdCatalogo": str(row["Catalogo"]) if not pandas.isna(row["Catalogo"]) else None,
+                        "IdPrestacion": str(row["Codigo Prestacion"]),
+                        "IdServicio": service_code,
+                        "Agendable": True,
+                        "Duracion": int(row["Duracion"]) if not pandas.isna(row["Duracion"]) else 0,
+                        "CodCentro": None if pandas.isna(row["Centro"]) else center_code,
+                        "Departamental": str(row["Codigo Prestacion"]),
+                        "Incremento": int(row["Duracion"]) + 10 if not pandas.isna(
+                            row["Duracion"]) else 0,
+                        "Decremento": int(10)
+                    }
                 )
+            )
 
             ambits_query: Any = self.sqlserver.execute_select(
                 "SELECT oa.AMBI_CODE FROM [sinasuite].[dbo].[ORMA_AMBITS] oa "
@@ -130,17 +122,16 @@ class BenefitsUpload:
             ambits_code: str = str(ambits_query[0][0])
 
             # Creation of ERP_PrestacionServicio JSON
-            for center_code in centers_code:
-                erp_origenprestacion_json.append(
-                    OrigenPrestacionModel(**
-                        {
-                            "CodCentro": center_code,
-                            "IdAmbito": ambits_code,
-                            "IdCatalogo": str(row["Catalogo"]) if not pandas.isna(row["Catalogo"]) else None,
-                            "IdPrestacion": str(row["Codigo Prestacion"])
-                        }
-                    )
+            erp_origenprestacion_json.append(
+                OrigenPrestacionModel(**
+                    {
+                        "CodCentro": None if pandas.isna(row["Centro"]) else center_code,
+                        "IdAmbito": ambits_code,
+                        "IdCatalogo": str(row["Catalogo"]) if not pandas.isna(row["Catalogo"]) else None,
+                        "IdPrestacion": str(row["Codigo Prestacion"])
+                    }
                 )
+            )
 
         return erp_prestacion_json, erp_prestacionservicio_json, erp_origenprestacion_json
 
@@ -172,16 +163,11 @@ class BenefitsUpload:
 
         if self.environment != "PRO":
             try:
-                self.sqlserver.begin()
-
                 self.sqlserver.execute_procedures(
                     Path(settings.RESOURCES_PATH).joinpath("stored procedures/PROC_GET_NAV_BENEFITS.sql").read_text().replace("{values_idprestaciones}", returns_codes.get("prestacion"))
                 )
             except Exception as e:
-                self.sqlserver.rollback()
                 raise Exception(f"{str(e)}\nCheck the table INTE_ERROR_NOTIFICATIONS.")
-            finally:
-                self.sqlserver.commit()
 
         return returns_codes
 

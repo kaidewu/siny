@@ -8,7 +8,7 @@ class PrestacionServicioModel(BaseModel):
     IdServicio: str
     Agendable: bool = True
     Duracion: int = 0
-    CodCentro: str
+    CodCentro: Union[str, None]
     Departamental: str
     Incremento: int = 0
     Decremento: int = 0

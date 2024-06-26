@@ -3,7 +3,7 @@ from typing import Union
 
 
 class OrigenPrestacionModel(BaseModel):
-    CodCentro: str
+    CodCentro: Union[str, None]
     IdAmbito: str
     IdCatalogo: Union[str, None]
     IdPrestacion: str

@@ -139,54 +139,52 @@ class InsertERPOrigenPrestacion:
         origenprestacion: List[str] = []
 
         try:
-            # Begin transaction
-            self.sqlserver.begin()
-
             for prestacion in self.origenprestacion_body:
                 # Set parameters
-                params: tuple = (
-                    prestacion.IdCatalogo if prestacion.IdCatalogo else "CAT01",
-                    prestacion.IdPrestacion,
-                    prestacion.IdAmbito,
-                    prestacion.CodCentro,
-                    prestacion.CodCentro,
-                    prestacion.IdAmbito,
-                    prestacion.IdCatalogo if prestacion.IdCatalogo else "CAT01",
-                    prestacion.IdPrestacion,
-                    None,
-                    1,
+                params_delete: tuple = tuple(filter(
+                    lambda delete: delete is not None, (
+                        prestacion.IdCatalogo if prestacion.IdCatalogo else "CAT01",
+                        prestacion.IdPrestacion,
+                        prestacion.IdAmbito,
+                        prestacion.CodCentro if prestacion.CodCentro else None
+                    )
+                ))
+                query_delete: str = ("DELETE FROM [sinasuite].[dbo].[ERP_OrigenPrestacion] WHERE IdCatalogo = ? "
+                                     "AND IdPrestacion = ? AND IdAmbito = ? AND Activo = 1")
+
+                if prestacion.CodCentro:
+                    query_delete += " AND CodCentro = ?"
+
+                self.sqlserver.execute_insert(
+                    query_delete, params=params_delete
                 )
+
+                # Set parameters
+                params_insert: tuple = (
+                        prestacion.CodCentro,
+                        prestacion.IdAmbito,
+                        prestacion.IdCatalogo if prestacion.IdCatalogo else "CAT01",
+                        prestacion.IdPrestacion,
+                        None,
+                        1
+                )
+
                 # Set Insert Query
                 self.sqlserver.execute_insert(
-                    (f"""DECLARE @SERV_CODE NVARCHAR(20)
-                    DECLARE CURSOR_SERVICE CURSOR FOR
-                        SELECT IdServicio FROM [sinasuite].[dbo].[ERP_Servicio] WHERE Activo = 1 AND IdServicio NOT IN ('ADM', 'TIC');
-                        OPEN CURSOR_SERVICE
-                            FETCH NEXT FROM CURSOR_SERVICE INTO @SERV_CODE;
-                                WHILE @@FETCH_STATUS = 0
-                                    BEGIN
-                                        IF NOT EXISTS (SELECT 1 FROM [sinasuite].[dbo].[ERP_OrigenPrestacion] WHERE IdCatalogo = ? AND IdPrestacion = ? AND IdAmbito = ? AND IdServicio = @SERV_CODE AND CodCentro = ?)
-                                            BEGIN
-                                                INSERT INTO [sinasuite].[dbo].[ERP_OrigenPrestacion] (CodCentro, IdAmbito, IdServicio, IdCatalogo, IdPrestacion, FLeido, Activo) 
-                                                VALUES (?, ?, @SERV_CODE, ?, ?, ?, ?);
-                                            END
-                                        
-                                        FETCH NEXT FROM CURSOR_SERVICE INTO @SERV_CODE;
-                                    END
-                        CLOSE CURSOR_SERVICE;
-                    DEALLOCATE CURSOR_SERVICE;
-                    """
-                     ), params=params
+                    ("INSERT INTO [dbo].[ERP_OrigenPrestacion] (CodCentro, IdAmbito, IdServicio, IdCatalogo, IdPrestacion, FLeido, Activo) "
+                     "SELECT ?, ?, IdServicio, ?, ?, ?, ? "
+                     "FROM [dbo].[ERP_Servicio] "
+                     "WHERE IdServicio NOT IN ('ADM', 'TIC');"
+                     ), params=params_insert
                 )
 
                 origenprestacion.append(prestacion.IdPrestacion)
 
-            # If there is no error with the insert, it commits the transaction
+            # Commits
             self.sqlserver.commit()
 
             return {
                 "origenPrestacion": ", ".join(f"'{text}'" for text in list(set(origenprestacion)))
             }
         except Exception as e:
-            self.sqlserver.rollback()
             raise Exception(str(e))
