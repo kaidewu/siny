@@ -162,6 +162,7 @@ class BenefitsUpload:
         returns_codes.update(insert_erp_origenprestacion.insert_origenprestacion())
 
         if self.environment != "PRO":
+            print(Path(settings.RESOURCES_PATH).joinpath("stored procedures/PROC_GET_NAV_BENEFITS.sql").read_text().replace("{values_idprestaciones}", returns_codes.get("prestacion")))
             try:
                 self.sqlserver.execute_procedures(
                     Path(settings.RESOURCES_PATH).joinpath("stored procedures/PROC_GET_NAV_BENEFITS.sql").read_text().replace("{values_idprestaciones}", returns_codes.get("prestacion"))

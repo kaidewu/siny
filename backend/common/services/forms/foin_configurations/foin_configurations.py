@@ -263,8 +263,33 @@ class FoinConfigurationUpload:
         coco_titles: List[str] = []
 
         for configuration in self.data_json:
-            # Check if exists in FOIN_CONF_CONFIGURATIONS
-            params_check: tuple = tuple(filter(
+            params_insert: tuple = (
+                configuration.title,
+                configuration.groupId,
+                configuration.actionId,
+                configuration.centerId,
+                configuration.centerName,
+                configuration.ambitId,
+                configuration.ambitName,
+                configuration.specialityId,
+                configuration.specialityName,
+                configuration.serviceId,
+                configuration.serviceName,
+                configuration.rolId,
+                configuration.rolName,
+                configuration.benefitId,
+                configuration.benefitName,
+                configuration.catalogId,
+                configuration.anesthesiaId
+            )
+
+            self.sqlserver.execute_insert(
+                "INSERT INTO [dbo].[FOIN_CONF_CONFIGURATIONS] (COCO_TITLE, COGR_ID, COAC_ID, CENTER_ID, CENTER_NAME, AMBIT_ID, AMBIT_NAME, SPECIALITY_ID, SPECIALITY_NAME, SERVICE_ID, SERVICE_NAME, ROL_ID, ROL_NAME, PRESTATION_ID, PRESTATION_NAME, COCO_SIGN_PATI, COCO_SIGN_PROF, COCO_CLOSE_ATTENTION, COCO_NEW_WHEN_SIGNED, CPTE_ID, COCA_ID, ANTY_ID, COCO_DELETED, COCO_DELETED_DATE) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, 1, 0, NULL, ?, ?, 0, NULL);",
+                params=params_insert
+            )
+
+            params_foin_configurations_select: tuple = tuple(filter(
                 lambda foin_configurations: foin_configurations is not None,
                 (
                     configuration.title,
@@ -285,67 +310,50 @@ class FoinConfigurationUpload:
                 )
             ))
 
-            check_foin_configurations_query: str = (
+            select_foin_configurations_query: str = (
                 "SELECT COCO_ID FROM [dbo].[FOIN_CONF_CONFIGURATIONS] WHERE COCO_TITLE = ? AND COGR_ID = ? "
                 "AND COAC_ID = ? AND CENTER_ID = ? AND CENTER_NAME = ? AND SERVICE_ID = ? AND SERVICE_NAME = ? "
                 "AND AMBIT_ID = ? AND AMBIT_NAME = ? AND ROL_ID = ? AND ROL_NAME = ?"
             )
 
             if configuration.benefitId:
-                check_foin_configurations_query += " AND PRESTATION_ID = ? AND PRESTATION_NAME = ?"
+                select_foin_configurations_query += " AND PRESTATION_ID = ? AND PRESTATION_NAME = ?"
 
             if configuration.catalogId:
-                check_foin_configurations_query += " AND COCA_ID = ?"
+                select_foin_configurations_query += " AND COCA_ID = ?"
 
             if configuration.anesthesiaId:
-                check_foin_configurations_query += " AND ANTY_ID = ?"
+                select_foin_configurations_query += " AND ANTY_ID = ?"
 
-            check_foin_configurations: Any = self.sqlserver.execute_select(
-                check_foin_configurations_query, params=params_check
+            coco_id_query: Any = self.sqlserver.execute_select(
+                select_foin_configurations_query, params=params_foin_configurations_select
             )
 
-            if not check_foin_configurations:
-                params_insert: tuple = (
-                    configuration.title,
-                    configuration.groupId,
-                    configuration.actionId,
-                    configuration.centerId,
-                    configuration.centerName,
-                    configuration.ambitId,
-                    configuration.ambitName,
-                    configuration.specialityId,
-                    configuration.specialityName,
-                    configuration.serviceId,
-                    configuration.serviceName,
-                    configuration.rolId,
-                    configuration.rolName,
-                    configuration.benefitId,
-                    configuration.benefitName,
-                    configuration.catalogId,
-                    configuration.anesthesiaId
-                )
+            coco_id: int = coco_id_query[0][0]
 
+            # Insert to AUDI_FOIN_CONF_CONFIGURATIONS
+            if isinstance(coco_id, int):
+                self._insert_auditories_foin_configurations(coco_id=coco_id)
+
+            coco_titles.append(configuration.title)
+
+            # Insert to FOIN_CONF_FORMS_LANGUAGES
+            foin_conf_forms_languages_query: Any = self.sqlserver.execute_select(
+                "SELECT 1 FROM [dbo].[FOIN_CONF_FORMS_LANGUAGES] fcfl "
+                "WHERE fcfl.LANG_ID = ? AND fcfl.COCO_ID = ?",
+                params=(
+                    configuration.languageId,
+                    coco_id
+                )
+            )
+
+            if not foin_conf_forms_languages_query:
                 self.sqlserver.execute_insert(
-                    "INSERT INTO [dbo].[FOIN_CONF_CONFIGURATIONS] (COCO_TITLE, COGR_ID, COAC_ID, CENTER_ID, CENTER_NAME, AMBIT_ID, AMBIT_NAME, SPECIALITY_ID, SPECIALITY_NAME, SERVICE_ID, SERVICE_NAME, ROL_ID, ROL_NAME, PRESTATION_ID, PRESTATION_NAME, COCO_SIGN_PATI, COCO_SIGN_PROF, COCO_CLOSE_ATTENTION, COCO_NEW_WHEN_SIGNED, CPTE_ID, COCA_ID, ANTY_ID, COCO_DELETED, COCO_DELETED_DATE) "
-                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, 1, 0, NULL, ?, ?, 0, NULL);",
-                    params=params_insert
+                    "INSERT INTO [dbo].[FOIN_CONF_FORMS_LANGUAGES] (COCO_ID, FORM_ID, LANG_ID) "
+                    "VALUES (?, ?, ?);",
+                    params=(coco_id, configuration.formId, configuration.languageId)
                 )
 
-                coco_id_query: Any = self.sqlserver.execute_select(
-                    check_foin_configurations_query, params=params_check
-                )
-
-                coco_id: int = coco_id_query[0][0]
-
-                if isinstance(coco_id, int):
-                    self._insert_auditories_foin_configurations(coco_id=coco_id)
-                    self._insert_foin_form_language(
-                        coco_id=coco_id,
-                        form_id=configuration.formId,
-                        language_id=configuration.languageId
-                    )
-
-                coco_titles.append(configuration.title)
         return coco_titles
 
     def return_insert_foin_configurations(self) -> Dict:
@@ -361,5 +369,5 @@ class FoinConfigurationUpload:
             self.sqlserver.commit()
 
         return {
-            "foinConfigurations": ", ".join(f"'{text}'" for text in coco_titles)
+            "foinConfigurations": ", ".join(f"'{text}'" for text in list(set(coco_titles)))
         }

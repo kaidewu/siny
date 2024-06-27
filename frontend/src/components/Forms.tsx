@@ -7,12 +7,15 @@ import Alert from './Alert';
 import DragAndDrop from './DragAndDrop';
 import Button from './Button';
 import FormsResponseBox from './FormsResponseBox';
+import { Spinner } from './Spinner';
 
 const Forms: React.FC = () => {
   const [alert, setAlert] = useState<{ type: 'success' | 'error', message: string, code?: string } | null>(null);
   const [apiResponse, setApiResponse] = useState<Record<string, any> | null>(null);
   const [file, setFile] = useState<File | null>(null);
   const navigate = useNavigate();
+  const [environment, setEnvironment] = useState<string>('PRE');
+  const [loading, setLoading] = useState<boolean>(false); // Loading state
 
   useEffect(() => {
     if (alert) {
@@ -40,6 +43,7 @@ const Forms: React.FC = () => {
   };
 
   const handleDownloadExcel = async () => {
+    setLoading(true); // Start loading
     try {
       const response = await fetch('http://localhost:8080/api/v1/forms/foin/configurations/example/excel');
       if (!response.ok) {
@@ -58,6 +62,8 @@ const Forms: React.FC = () => {
         message: errorMsg.message || 'Failed to download Excel file.',
         code: errorMsg.code,
       });
+    } finally {
+      setLoading(false); // End loading
     }
   };
 
@@ -67,12 +73,14 @@ const Forms: React.FC = () => {
       return;
     }
 
+    setLoading(true); // Start loading
+
     try {
       const formData = new FormData();
       formData.append('file', file);
 
       // Simulating sending file to API
-      const response = await fetch('http://localhost:8080/api/v1/forms/foin/configurations/upload', {
+      const response = await fetch(`http://localhost:8080/api/v1/forms/foin/configurations/upload?environment=${environment}`, {
         method: 'POST',
         body: formData,
       });
@@ -91,6 +99,8 @@ const Forms: React.FC = () => {
         message: errorMsg.message || 'Failed to send file to API.',
         code: errorMsg.code,
       });
+    } finally {
+      setLoading(false); // End loading
     }
   };
 
@@ -107,6 +117,11 @@ const Forms: React.FC = () => {
 
   return (
     <div className="flex justify-center p-4">
+      {loading && (
+        <div className="absolute inset-0 flex items-center justify-center bg-gray-500 bg-opacity-50 z-50">
+          <Spinner />
+        </div>
+      )}
       <div className="w-full max-w-3xl border p-4">
         {alert && <Alert type={alert.type} message={alert.message} code={alert.code} />}
         <div className="absolute top-4 left-4">
@@ -117,7 +132,18 @@ const Forms: React.FC = () => {
             <DragAndDrop onDrop={handleDrop} />
           </div>
         </DndProvider>
-        <div className="flex justify-end mb-4">
+        <div className="flex justify-end items-center my-4 space-x-4">
+          <label htmlFor="environment" className="mr-2">Entorno:</label>
+          <select
+              id="environment"
+              value={environment}
+              onChange={(e) => setEnvironment(e.target.value)}
+              className="mr-4 p-2 border rounded"
+          >
+            <option value="PRE">PRE</option>
+            <option value="CAPA">CAPA</option>
+            <option value="PRO">PRO</option>
+          </select>
           <Button onClick={handleSendToApi}>GO</Button>
         </div>
         <FormsResponseBox response={apiResponse} />
