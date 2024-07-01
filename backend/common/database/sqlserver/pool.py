@@ -1,7 +1,6 @@
 import pyodbc
-from urllib.parse import quote_plus
 from settings.settings import settings
-from typing import List, Any
+from typing import Any
 import logging
 
 logger = logging.Logger(__name__)
