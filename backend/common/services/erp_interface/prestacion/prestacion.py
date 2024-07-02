@@ -1,6 +1,5 @@
 import logging
 from typing import Any, List, Dict
-from common.database.sqlserver import sqlserver_db_pool as sqlserver
 from schemas.erp_interface.prestacion.prestacion import PrestacionModel
 
 logger = logging.Logger(__name__)
@@ -9,6 +8,7 @@ logger = logging.Logger(__name__)
 class ERPPrestacion:
     def __init__(
             self,
+            sqlserver: Any,
             catalog_id: str = None,
             prestacion_name: str = None,
             prestacion_code: str = None,
@@ -33,6 +33,9 @@ class ERPPrestacion:
         :param page:
         :param size: Number of size of data
         """
+        if not sqlserver:
+            raise ConnectionError("The connection of the pool has not been declared")
+
         self.sqlserver = sqlserver
         self.catalog_id: str = catalog_id
         self.prestacion_name: str = prestacion_name
@@ -138,7 +141,8 @@ class ERPPrestacion:
 class InsertERPPrestacion:
     def __init__(
             self,
-            prestacion_body: List[PrestacionModel]
+            prestacion_body: List[PrestacionModel],
+            sqlserver: Any
     ) -> None:
         self.sqlserver: Any = sqlserver
         self.prestacion_body: List[PrestacionModel] = prestacion_body

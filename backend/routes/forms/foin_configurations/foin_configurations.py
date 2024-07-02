@@ -4,9 +4,10 @@ import aiofiles.os
 from typing import Any
 from pathlib import Path
 from common.services.forms.foin_configurations.foin_configurations import FoinConfigurationUpload
+from common.database.sqlserver.pool import SQLServerDatabasePool, get_db_pool
 from common.errors import raise_http_error
 from settings.settings import settings
-from fastapi import APIRouter, File, UploadFile
+from fastapi import APIRouter, File, UploadFile, Depends
 from fastapi.responses import JSONResponse, FileResponse
 
 router = APIRouter()
@@ -15,11 +16,13 @@ router = APIRouter()
 @router.post(
     path="/forms/foin/configurations/upload",
     tags=["Upload configurations of forms"],
-    summary="Data loading configurations to FOIN_CONF_CONFIGURATIONS and FOIN_CONF_FORMS_LANGUAGES"
+    summary="Data loading configurations to FOIN_CONF_CONFIGURATIONS and FOIN_CONF_FORMS_LANGUAGES",
+    status_code=201
 )
 async def upload_foin_configurations(
         environment: str = "PRE",
-        file: UploadFile = File(...)
+        file: UploadFile = File(...),
+        db_pool: SQLServerDatabasePool = Depends(get_db_pool)
 ) -> Any:
     file_path: Path = Path(settings.TEMP_PATH).joinpath(file.filename)
 
@@ -45,7 +48,8 @@ async def upload_foin_configurations(
 
         foin_configurations_upload = FoinConfigurationUpload(
             file_path=file_path,
-            environment=environment
+            environment=environment,
+            sqlserver=db_pool
         )
 
         return JSONResponse(
@@ -58,6 +62,7 @@ async def upload_foin_configurations(
         if file_path.exists() and file_path.is_file():
             # If it's true, remove the uploaded file.
             await aiofiles.os.remove(file_path)
+
 
 @router.get(
     path="/forms/foin/configurations/example/excel",

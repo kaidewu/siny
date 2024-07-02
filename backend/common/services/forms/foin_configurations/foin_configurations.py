@@ -3,7 +3,6 @@ import pandas
 from pandas import DataFrame
 from typing import Any, List, Tuple, Dict
 from pathlib import Path
-from common.database.sqlserver import sqlserver_db_pool as sqlserver
 from schemas.forms.foin_configurations.foin_configurations import FoinConfigurationUploadModel
 
 logger = logging.Logger(__name__)
@@ -12,13 +11,17 @@ logger = logging.Logger(__name__)
 class FoinConfigurationUpload:
     def __init__(
             self,
+            sqlserver: Any,
             file_path: Path,
             environment: str = "PRE"
     ) -> None:
+        if not sqlserver:
+            raise ConnectionError("The connection of the pool has not been declared")
+
         self.sqlserver: Any = sqlserver
         self.excel_read: DataFrame = pandas.read_excel(Path(file_path).resolve(), sheet_name="HOJA FORMULARIO")
         self.data_json: List[FoinConfigurationUploadModel] = []
-        self.environment: str  = environment
+        self.environment: str = environment
 
         for index, row in self.excel_read.iterrows():
             # Declares of variables

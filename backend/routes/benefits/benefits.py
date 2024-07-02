@@ -7,7 +7,8 @@ import aiofiles
 import aiofiles.os
 from common.services.benefits.benefits import BenefitsUpload, Benefits
 from common.errors import raise_http_error, ErrorCode
-from fastapi import APIRouter, UploadFile, File
+from common.database.sqlserver.pool import SQLServerDatabasePool, get_db_pool
+from fastapi import APIRouter, UploadFile, File, Depends
 from fastapi.responses import JSONResponse, FileResponse
 from settings.settings import settings
 
@@ -17,14 +18,17 @@ router = APIRouter()
 @router.post(
     path="/create/benefits/upload",
     tags=["Uploads"],
-    summary="Upload Excel file with benefits data"
+    summary="Upload Excel file with benefits data",
+    status_code=201
 )
 async def upload_benefits_file(
         environment: str = "PRE",
-        file: UploadFile = File(...)
+        file: UploadFile = File(...),
+        db_pool: SQLServerDatabasePool = Depends(get_db_pool)
 ) -> Any:
     """
     REST API of Benefits where need upload an Excel or CSV file to execute the data loading.
+    :param db_pool:
     :param environment: Environment of SINA
     :param file: An Excel or CSV file to upload
     :return: Return the text of SQL Script or the path where it's located the SQL Script file. Still in development.
@@ -59,7 +63,8 @@ async def upload_benefits_file(
         # Set class Benefits
         benefits_upload = BenefitsUpload(
             environment=environment,
-            filename=file.filename
+            filename=file.filename,
+            sqlserver=db_pool
         )
 
         return JSONResponse(
@@ -106,7 +111,8 @@ async def get_orma_benefits(
         end_created_date: str = datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z",
         deleted: bool = False,
         page: int = 1,
-        size: int = 20
+        size: int = 20,
+        db_pool: SQLServerDatabasePool = Depends(get_db_pool)
 ) -> Any:
     try:
         benefits = Benefits(
@@ -119,7 +125,8 @@ async def get_orma_benefits(
             end_created_date=end_created_date,
             deleted=deleted,
             page=page,
-            size=size
+            size=size,
+            sqlserver=db_pool
         )
 
         return JSONResponse(

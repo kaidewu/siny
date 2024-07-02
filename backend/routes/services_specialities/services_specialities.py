@@ -5,8 +5,9 @@ import aiofiles
 import aiofiles.os
 from common.services.services_specialities.services_specialities import ServicesSpecialitiesUpload
 from common.errors import raise_http_error, ErrorCode
+from common.database.sqlserver.pool import SQLServerDatabasePool, get_db_pool
 from settings.settings import settings
-from fastapi import APIRouter, File, UploadFile
+from fastapi import APIRouter, File, UploadFile, Depends
 from fastapi.responses import JSONResponse, FileResponse
 
 router = APIRouter()
@@ -15,11 +16,13 @@ router = APIRouter()
 @router.post(
     path="/upload/services-specialities",
     tags=["Upload External Services"],
-    summary="Data loading to external services"
+    summary="Data loading to external services",
+    status_code=201
 )
 async def upload_services_specialities(
         environment: str = "PRE",
-        file: UploadFile = File(...)
+        file: UploadFile = File(...),
+        db_pool: SQLServerDatabasePool = Depends(get_db_pool)
 ) -> Any:
     file_path: Path = Path(settings.TEMP_PATH).joinpath(file.filename)
 
@@ -49,7 +52,8 @@ async def upload_services_specialities(
 
         services_specialities = ServicesSpecialitiesUpload(
             environment=environment,
-            file_path=file_path
+            file_path=file_path,
+            sqlserver=db_pool
         )
 
         return JSONResponse(

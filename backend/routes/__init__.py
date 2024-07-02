@@ -29,5 +29,10 @@ def add_benefits_route(route_prefix: str):
     routes.include_router(erp_prestacionservicio_router, prefix=route_prefix)
     routes.include_router(erp_origenprestacion_router, prefix=route_prefix)
 
+    # DATABASE
+    from .database.pool.pool import router as pool_router
+
+    routes.include_router(pool_router, prefix=route_prefix)
+
 
 add_benefits_route(settings.API_ROUTE_PREFIX)

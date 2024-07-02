@@ -65,12 +65,7 @@ class Settings:
         self.PROD: bool = True if self.MODE == "prod" else False
 
         # Database Information
-        self.SERVERNAME: str = load_str_env("SQLSERVER_SERVERNAME", required=True)
-        self.DATABASE: str = load_str_env("SQLSERVER_DATABASE", required=True)
-        logger.debug(f"{self.SERVERNAME}:1433/{self.DATABASE}")
-        self.SQL_USERNAME: str = load_str_env("SQLSERVER_USERNAME", required=True)
-        self.SQL_PASSWORD: str = load_str_env("SQLSERVER_PASSWORD", required=True)
-        self.DRIVER: str = load_str_env("SQLSERVER_DRIVER", required=True)
+        self.DRIVER: str = "ODBC Driver 17 for SQL Server"
 
 
 settings = Settings()

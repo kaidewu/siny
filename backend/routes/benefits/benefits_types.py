@@ -3,9 +3,9 @@ import sys
 
 from common.services.benefits.benefits_types import BenefitTypes
 from common.errors import raise_http_error, ErrorCode
-from fastapi import APIRouter
+from common.database.sqlserver.pool import SQLServerDatabasePool, get_db_pool
+from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
-from settings.settings import settings
 
 router = APIRouter()
 
@@ -20,7 +20,8 @@ async def get_orma_benefit_types(
         benefit_type_code: str = None,
         deleted: bool = False,
         page: int = 1,
-        size: int = 20
+        size: int = 20,
+        db_pool: SQLServerDatabasePool = Depends(get_db_pool)
 ) -> Any:
     try:
         benefit_types = BenefitTypes(
@@ -28,7 +29,8 @@ async def get_orma_benefit_types(
             benefit_type_code=benefit_type_code,
             deleted=deleted,
             page=page,
-            size=size
+            size=size,
+            sqlserver=db_pool
         )
 
         return JSONResponse(
