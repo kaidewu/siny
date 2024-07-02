@@ -314,7 +314,7 @@ class FoinConfigurationUpload:
             ))
 
             select_foin_configurations_query: str = (
-                "SELECT COCO_ID FROM [dbo].[FOIN_CONF_CONFIGURATIONS] WHERE COCO_TITLE = ? AND COGR_ID = ? "
+                "SELECT TOP 1 COCO_ID FROM [dbo].[FOIN_CONF_CONFIGURATIONS] WHERE COCO_TITLE = ? AND COGR_ID = ? "
                 "AND COAC_ID = ? AND CENTER_ID = ? AND CENTER_NAME = ? AND SERVICE_ID = ? AND SERVICE_NAME = ? "
                 "AND AMBIT_ID = ? AND AMBIT_NAME = ? AND ROL_ID = ? AND ROL_NAME = ?"
             )
@@ -328,6 +328,8 @@ class FoinConfigurationUpload:
             if configuration.anesthesiaId:
                 select_foin_configurations_query += " AND ANTY_ID = ?"
 
+            select_foin_configurations_query += " ORDER BY COCO_ID DESC"
+
             coco_id_query: Any = self.sqlserver.execute_select(
                 select_foin_configurations_query, params=params_foin_configurations_select
             )
@@ -335,8 +337,9 @@ class FoinConfigurationUpload:
             coco_id: int = coco_id_query[0][0]
 
             # Insert to AUDI_FOIN_CONF_CONFIGURATIONS
-            if isinstance(coco_id, int):
-                self._insert_auditories_foin_configurations(coco_id=coco_id)
+            if not isinstance(coco_id, int):
+                raise Exception("The COCO_ID is not an integer")
+            self._insert_auditories_foin_configurations(coco_id=coco_id)
 
             coco_titles.append(configuration.title)
 
