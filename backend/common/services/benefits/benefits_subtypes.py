@@ -1,7 +1,6 @@
 import logging
 from typing import Any, List
 from pathlib import Path
-from common.database.sqlserver import sqlserver_db_pool as sqlserver
 from schemas.benefits.benefit_subtypes import SubfamiliaModel
 from settings.settings import settings
 
@@ -16,7 +15,8 @@ class BenefitSubtypes:
             benefit_type_code: str,
             deleted: bool,
             page: int,
-            size: int
+            size: int,
+            sqlserver: Any
     ) -> None:
         """
 
@@ -27,6 +27,9 @@ class BenefitSubtypes:
         :param page:
         :param size:
         """
+        if not sqlserver:
+            raise ConnectionError("The connection of the pool has not been declared")
+
         self.sqlserver: Any = sqlserver
         self.benefit_subtype_name: str = benefit_subtype_name
         self.benefit_subtype_code: str = benefit_subtype_code
@@ -87,8 +90,12 @@ class BenefitSubtypes:
 class BenefitSubtypesCreation:
     def __init__(
             self,
-            benefit_subtypes_body: List[SubfamiliaModel]
+            benefit_subtypes_body: List[SubfamiliaModel],
+            sqlserver: Any
     ) -> None:
+        if not sqlserver:
+            raise ConnectionError("The connection of the pool has not been declared")
+
         self.sqlserver: Any = sqlserver
         self.benefit_subtypes_body: List[SubfamiliaModel] = benefit_subtypes_body
 

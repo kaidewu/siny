@@ -4,7 +4,8 @@ import sys
 from common.services.benefits.benefits_subtypes import BenefitSubtypes, BenefitSubtypesCreation
 from schemas.benefits.benefit_subtypes import SubfamiliaModel
 from common.errors import raise_http_error, ErrorCode
-from fastapi import APIRouter
+from common.database.sqlserver.pool import SQLServerDatabasePool, get_db_pool
+from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
 
 router = APIRouter()
@@ -21,7 +22,8 @@ async def get_orma_benefit_subtypes(
         benefit_type_code: str = None,
         deleted: bool = False,
         page: int = 1,
-        size: int = 20
+        size: int = 20,
+        db_pool: SQLServerDatabasePool = Depends(get_db_pool)
 ) -> Any:
     try:
         benefit_subtypes = BenefitSubtypes(
@@ -30,7 +32,8 @@ async def get_orma_benefit_subtypes(
             benefit_type_code=benefit_type_code,
             deleted=deleted,
             page=page,
-            size=size
+            size=size,
+            slqserver=db_pool
         )
 
         return JSONResponse(
@@ -43,14 +46,17 @@ async def get_orma_benefit_subtypes(
 @router.post(
     path="/create/benefits/subtypes",
     tags=["Creation BenefitTypes"],
-    summary="Create a subtype in ORMA_BENEFIT_SUBTYPES"
+    summary="Create a subtype in ORMA_BENEFIT_SUBTYPES",
+    status_code=201
 )
 async def creation_benefit_subtype(
-        benefit_subtypes_body: List[SubfamiliaModel]
+        benefit_subtypes_body: List[SubfamiliaModel],
+        db_pool: SQLServerDatabasePool = Depends(get_db_pool)
 ) -> Any:
     try:
         benefit_subtypes_creation = BenefitSubtypesCreation(
-            benefit_subtypes_body=benefit_subtypes_body
+            benefit_subtypes_body=benefit_subtypes_body,
+            sqlserver=db_pool
         )
 
         return JSONResponse(

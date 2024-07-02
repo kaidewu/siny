@@ -1,35 +1,24 @@
 import pyodbc
+from typing import Any, Union
 from settings.settings import settings
-from typing import Any
 import logging
 
 logger = logging.Logger(__name__)
 
 
-def connection_string(driver: str, server: str, database: str, username: str, password: str) -> str:
-    return (
-        f'DRIVER={driver};'
-        f'SERVER={server};'
-        f'DATABASE={database};'
-        f'UID={username};'
-        f'PWD={password};'
-        'TrustServerCertificate=yes;'
-    )
-
-
 class SQLServerDatabasePool:
     def __init__(
             self,
-            driver: str,
             servername: str,
-            database: str,
             username: str,
-            password: str
+            password: str,
+            database: Union[str, None] = None,
+            driver: Union[str, None] = None,
     ) -> None:
         self.db_pool = None
-        self.driver: str = driver
+        self.driver: str = driver if driver else settings.DRIVER
         self.servername: str = servername
-        self.database: str = database
+        self.database: str = database if database else "sinasuite"
         self.username: str = username
         self.password: str = password
 
@@ -118,12 +107,15 @@ class SQLServerDatabasePool:
             raise Exception(f"SQL Server Error: {str(e)}")
 
 
-# Init SQL Server db pool instance
-sqlserver_db_pool = SQLServerDatabasePool(
-    driver=settings.DRIVER,
-    servername=settings.SERVERNAME,
-    database=settings.DATABASE,
-    username=settings.SQL_USERNAME,
-    password=settings.SQL_PASSWORD
-)
+db_pool_instance: Union[SQLServerDatabasePool, None] = None
 
+
+def get_db_pool() -> SQLServerDatabasePool:
+    if db_pool_instance is None:
+        raise Exception("Database connection has not been initialized.")
+    return db_pool_instance
+
+
+def set_db_pool(pool: SQLServerDatabasePool) -> None:
+    global db_pool_instance
+    db_pool_instance = pool

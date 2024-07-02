@@ -3,7 +3,6 @@ import pandas
 from pandas import DataFrame
 import logging
 from typing import Any, List, Dict
-from common.database.sqlserver import sqlserver_db_pool as sqlserver
 from schemas.services_specialities.services_specialities import ServicesSpecialitiesModel
 
 logger = logging.Logger(__name__)
@@ -12,9 +11,13 @@ logger = logging.Logger(__name__)
 class ServicesSpecialitiesUpload:
     def __init__(
             self,
+            sqlserver: Any,
             file_path: Path,
             environment: str = "PRE"
     ) -> None:
+        if not sqlserver:
+            raise ConnectionError("The connection of the pool has not been declared")
+
         self.sqlserver: Any = sqlserver
         self.environment: str = environment
         self.file_path: Path = file_path

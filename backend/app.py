@@ -3,6 +3,7 @@ from routes import routes
 from pathlib import Path
 from starlette.middleware.cors import CORSMiddleware
 from common.errors.exception_handlers import *
+from common.database.sqlserver.pool import db_pool_instance
 from settings.settings import settings
 import logging
 
@@ -22,19 +23,17 @@ logger.addHandler(console_handler)
 
 
 def create_app():
-    from common.database.sqlserver import sqlserver_db_pool
-
     # Set FastAPI
     app = FastAPI()
 
     @app.on_event("startup")
     def startup_event():
         logger.info("FastAPI app startup...")
-        sqlserver_db_pool.init_pool()
 
     @app.on_event("shutdown")
     def shutdown_event():
-        sqlserver_db_pool.close_pool()
+        if db_pool_instance:
+            db_pool_instance.close_pool()
         logger.info("FastAPI app shutdown...")
 
     app.exception_handler(HTTPException)(custom_http_exception_handler)

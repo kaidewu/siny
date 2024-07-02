@@ -3,7 +3,6 @@ import pandas
 import logging
 from typing import Union, Any, List, Dict, Tuple
 from settings.settings import settings
-from common.database.sqlserver import sqlserver_db_pool as sqlserver
 from datetime import datetime
 
 logger = logging.Logger(__name__)
@@ -13,13 +12,18 @@ class BenefitsUpload:
     def __init__(
             self,
             environment: str,
-            filename: str
+            filename: str,
+            sqlserver
     ) -> None:
         """
         Class BenefitsUpload read the Excel provided and loading the ERP_Prestacion, ERP_PrestacionServicio and
         ERP_OrigenPrestacion endpoint to data loading massively
         :param filename: the name of the Excel file
         """
+
+        if not sqlserver:
+            raise ConnectionError("The connection of the pool has not been declared")
+
         self.sqlserver: Any = sqlserver
         self.file_read = pandas.read_excel(Path(settings.TEMP_PATH).joinpath(filename), sheet_name="HOJA PRESTACION")
         self.environment: str = environment
@@ -185,8 +189,14 @@ class Benefits:
             end_created_date: str,
             deleted: bool,
             page: int,
-            size: int
+            size: int,
+            sqlserver: Any
     ) -> None:
+
+        if not sqlserver:
+            raise ConnectionError("The connection of the pool has not been declared")
+
+        self.sqlserver: Any = sqlserver
         self.benefit_name: str = benefit_name
         self.benefit_code: str = benefit_code
         self.benefit_type_code: str = benefit_type_code
@@ -257,7 +267,7 @@ class Benefits:
                   f"FETCH NEXT {self.size} ROWS ONLY")
 
         # Execute the query
-        _get_benefits: Any = sqlserver.execute_select(
+        _get_benefits: Any = self.sqlserver.execute_select(
             query=query, params=params
         )
 

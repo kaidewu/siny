@@ -4,8 +4,8 @@ import sys
 from common.services.erp_interface.origen_prestacion.origen_prestacion import ERPOrigenPrestacion, InsertERPOrigenPrestacion
 from common.errors import raise_http_error, ErrorCode
 from schemas.erp_interface.origen_prestacion.origen_prestacion import OrigenPrestacionModel
-
-from fastapi import APIRouter
+from common.database.sqlserver.pool import SQLServerDatabasePool, get_db_pool
+from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
 
 router = APIRouter()
@@ -25,7 +25,8 @@ async def get_erp_prestacion(
         read: bool = False,
         active: bool = True,
         page: int = 1,
-        size: int = 20
+        size: int = 20,
+        db_pool: SQLServerDatabasePool = Depends(get_db_pool)
 ) -> Any:
     try:
         erp_origenprestacion = ERPOrigenPrestacion(
@@ -37,7 +38,8 @@ async def get_erp_prestacion(
             read=read,
             active=active,
             page=page,
-            size=size
+            size=size,
+            sqlserver=db_pool
         )
 
         return JSONResponse(
@@ -50,14 +52,17 @@ async def get_erp_prestacion(
 @router.post(
     path="/erp/interface/origen/prestacion/insert",
     tags=["Insert into ERP_OrigenPrestacion"],
-    summary="Insert data into ERP_OrigenPrestacion table"
+    summary="Insert data into ERP_OrigenPrestacion table",
+    status_code=201
 )
 async def insert_erp_prestacion(
-        origenprestacion_body: List[OrigenPrestacionModel]
+        origenprestacion_body: List[OrigenPrestacionModel],
+        db_pool: SQLServerDatabasePool = Depends(get_db_pool)
 ):
     try:
         insert_erp_origenprestacion = InsertERPOrigenPrestacion(
-            origenprestacion_body=origenprestacion_body
+            origenprestacion_body=origenprestacion_body,
+            sqlserver=db_pool
         )
 
         return JSONResponse(

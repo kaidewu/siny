@@ -1,6 +1,5 @@
 import logging
 from typing import Any, List, Dict
-from common.database.sqlserver import sqlserver_db_pool as sqlserver
 
 logger = logging.Logger(__name__)
 
@@ -13,7 +12,8 @@ class Centers:
             external: bool,
             deleted: bool,
             page: int,
-            size: int
+            size: int,
+            sqlserver: Any
     ) -> None:
         """
 
@@ -24,6 +24,9 @@ class Centers:
         :param page:
         :param size:
         """
+        if not sqlserver:
+            raise ConnectionError("The connection of the pool has not been declared")
+
         self.sqlserver: Any = sqlserver
         self.center_name: str = center_name
         self.center_code: str = center_code

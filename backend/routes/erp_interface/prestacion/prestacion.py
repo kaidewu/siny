@@ -4,8 +4,8 @@ import sys
 from common.services.erp_interface.prestacion.prestacion import ERPPrestacion, InsertERPPrestacion
 from common.errors import raise_http_error, ErrorCode
 from schemas.erp_interface.prestacion.prestacion import PrestacionModel
-
-from fastapi import APIRouter
+from common.database.sqlserver.pool import SQLServerDatabasePool, get_db_pool
+from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
 
 router = APIRouter()
@@ -27,7 +27,8 @@ async def get_erp_prestacion(
         read: bool = False,
         active: bool = True,
         page: int = 1,
-        size: int = 20
+        size: int = 20,
+        db_pool: SQLServerDatabasePool = Depends(get_db_pool)
 ) -> Any:
     try:
         erp_prestacion = ERPPrestacion(
@@ -41,7 +42,8 @@ async def get_erp_prestacion(
             read=read,
             active=active,
             page=page,
-            size=size
+            size=size,
+            sqlserver=db_pool
         )
 
         return JSONResponse(
@@ -54,14 +56,17 @@ async def get_erp_prestacion(
 @router.post(
     path="/erp/interface/prestacion/insert",
     tags=["Insert into ERP_Prestacion"],
-    summary="Insert data into ERP_Prestacion table"
+    summary="Insert data into ERP_Prestacion table",
+    status_code=201
 )
 async def insert_erp_prestacion(
-        prestacion_body: List[PrestacionModel]
+        prestacion_body: List[PrestacionModel],
+        db_pool: SQLServerDatabasePool = Depends(get_db_pool)
 ):
     try:
         insert_erp_prestacion = InsertERPPrestacion(
-            prestacion_body=prestacion_body
+            prestacion_body=prestacion_body,
+            sqlserver=db_pool
         )
 
         return JSONResponse(

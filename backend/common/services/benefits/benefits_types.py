@@ -1,5 +1,4 @@
 from typing import Any
-from common.database.sqlserver import sqlserver_db_pool as sqlserver
 
 
 class BenefitTypes:
@@ -9,7 +8,8 @@ class BenefitTypes:
             benefit_type_code: str,
             deleted: bool,
             page: int,
-            size: int
+            size: int,
+            sqlserver: Any
     ) -> None:
         """
 
@@ -19,6 +19,9 @@ class BenefitTypes:
         :param page:
         :param size:
         """
+        if not sqlserver:
+            raise ConnectionError("The connection of the pool has not been declared")
+
         self.sqlserver: Any = sqlserver
         self.benefit_type_name: str = benefit_type_name
         self.benefit_type_code: str = benefit_type_code
