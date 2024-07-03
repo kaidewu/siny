@@ -3,7 +3,7 @@ from typing import Any
 from common.database.sqlserver.pool import SQLServerDatabasePool, set_db_pool, get_db_pool
 from schemas.database.pool import DatabaseCredentials
 from common.errors import raise_http_error, ErrorCode
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 
 router = APIRouter()
@@ -24,7 +24,8 @@ async def change_connection_pool(
             servername=credentials.servername,
             database=credentials.database,
             username=credentials.username,
-            password=credentials.password
+            password=credentials.password,
+            environment=credentials.environment
         )
 
         if not sqlserver_db_pool:

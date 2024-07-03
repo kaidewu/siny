@@ -20,10 +20,10 @@ router = APIRouter()
     status_code=201
 )
 async def upload_foin_configurations(
-        environment: str = "PRE",
-        file: UploadFile = File(...),
-        db_pool: SQLServerDatabasePool = Depends(get_db_pool)
+        file: UploadFile = File(...)
 ) -> Any:
+    db_pool: SQLServerDatabasePool = get_db_pool()
+
     file_path: Path = Path(settings.TEMP_PATH).joinpath(file.filename)
 
     # Verification of params.
@@ -48,7 +48,7 @@ async def upload_foin_configurations(
 
         foin_configurations_upload = FoinConfigurationUpload(
             file_path=file_path,
-            environment=environment,
+            environment=db_pool.environment(),
             sqlserver=db_pool
         )
 
@@ -70,6 +70,7 @@ async def upload_foin_configurations(
     summary="Return the Excel for the data loading for Forms"
 )
 async def get_benefit_excel():
+
     excel_path: Path = Path(settings.RESOURCES_PATH).joinpath("examples/CARGA FORMS.xlsx")
 
     if not excel_path.exists() and not excel_path.is_file():

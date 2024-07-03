@@ -7,7 +7,7 @@ from common.services.services_specialities.services_specialities import Services
 from common.errors import raise_http_error, ErrorCode
 from common.database.sqlserver.pool import SQLServerDatabasePool, get_db_pool
 from settings.settings import settings
-from fastapi import APIRouter, File, UploadFile, Depends
+from fastapi import APIRouter, File, UploadFile
 from fastapi.responses import JSONResponse, FileResponse
 
 router = APIRouter()
@@ -20,10 +20,9 @@ router = APIRouter()
     status_code=201
 )
 async def upload_services_specialities(
-        environment: str = "PRE",
-        file: UploadFile = File(...),
-        db_pool: SQLServerDatabasePool = Depends(get_db_pool)
+        file: UploadFile = File(...)
 ) -> Any:
+
     file_path: Path = Path(settings.TEMP_PATH).joinpath(file.filename)
 
     # Verification of params.
@@ -40,10 +39,9 @@ async def upload_services_specialities(
         raise ValueError("The file uploaded is not an Excel. Please, "
                          "verify the file and try again.")
 
-    if environment not in ("PRO", "PRE", "CAPA", "DES"):
-        raise ValueError("Environment parameter must be 'PRO' or 'PRE' or 'CAPA' or 'DES'")
-
     try:
+        db_pool: SQLServerDatabasePool = get_db_pool()
+
         # Check if exists the uploaded file.
         if not file_path.exists():
             # If exists, save temporary the uploaded file.
@@ -51,7 +49,7 @@ async def upload_services_specialities(
                 await save_file.write(await file.read())
 
         services_specialities = ServicesSpecialitiesUpload(
-            environment=environment,
+            environment=db_pool.environment(),
             file_path=file_path,
             sqlserver=db_pool
         )

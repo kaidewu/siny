@@ -5,7 +5,7 @@ from common.services.erp_interface.prestacion_servicio.prestacion_servicio impor
 from common.errors import raise_http_error, ErrorCode
 from schemas.erp_interface.prestacion_servicio.prestacion_servicio import PrestacionServicioModel
 from common.database.sqlserver.pool import SQLServerDatabasePool, get_db_pool
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 
 router = APIRouter()
@@ -29,9 +29,10 @@ async def get_erp_prestacionservicio(
         read: bool = False,
         active: bool = True,
         page: int = 1,
-        size: int = 20,
-        db_pool: SQLServerDatabasePool = Depends(get_db_pool)
+        size: int = 20
 ) -> Any:
+    db_pool: SQLServerDatabasePool = get_db_pool()
+
     try:
         erp_prestacionservicio = ERPPrestacionServicio(
             catalog_id=catalog_id,
@@ -64,9 +65,10 @@ async def get_erp_prestacionservicio(
     status_code=201
 )
 async def insert_erp_prestacionservicio(
-        prestacionservicio_body: List[PrestacionServicioModel],
-        db_pool: SQLServerDatabasePool = Depends(get_db_pool)
+        prestacionservicio_body: List[PrestacionServicioModel]
 ):
+    db_pool: SQLServerDatabasePool = get_db_pool()
+
     try:
         insert_erp_prestacionservicio = InsertERPPrestacionServicio(
             prestacionservicio_body=prestacionservicio_body,

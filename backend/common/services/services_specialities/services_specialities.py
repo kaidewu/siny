@@ -19,12 +19,14 @@ class ServicesSpecialitiesUpload:
             raise ConnectionError("The connection of the pool has not been declared")
 
         self.sqlserver: Any = sqlserver
+
+        if environment not in ("PRO", "PRE", "CAPA"):
+            raise ValueError("Environment parameter must be 'PRO' or 'PRE' or 'CAPA'")
+
         self.environment: str = environment
         self.file_path: Path = file_path
         self.df_excel: DataFrame = pandas.read_excel(self.file_path, sheet_name="HOJA ESPECIALIDADES EXTERNAS")
         self.services_specialities_data: List[ServicesSpecialitiesModel] = []
-
-        external_center: Any = None
 
         for index, row in self.df_excel.iterrows():
             # Validations of required data
