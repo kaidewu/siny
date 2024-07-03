@@ -8,3 +8,4 @@ class DatabaseCredentials(BaseModel):
     database: Union[str, None]
     username: str
     password: str
+    environment: str

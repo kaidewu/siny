@@ -21,6 +21,10 @@ class FoinConfigurationUpload:
         self.sqlserver: Any = sqlserver
         self.excel_read: DataFrame = pandas.read_excel(Path(file_path).resolve(), sheet_name="HOJA FORMULARIO")
         self.data_json: List[FoinConfigurationUploadModel] = []
+
+        if environment not in ("PRO", "PRE", "CAPA"):
+            raise ValueError("Environment parameter must be 'PRO' or 'PRE' or 'CAPA'")
+
         self.environment: str = environment
 
         for index, row in self.excel_read.iterrows():

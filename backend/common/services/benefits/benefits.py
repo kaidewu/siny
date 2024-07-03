@@ -26,6 +26,10 @@ class BenefitsUpload:
 
         self.sqlserver: Any = sqlserver
         self.file_read = pandas.read_excel(Path(settings.TEMP_PATH).joinpath(filename), sheet_name="HOJA PRESTACION")
+
+        if environment not in ("PRO", "PRE", "CAPA"):
+            raise ValueError("Environment parameter must be 'PRO' or 'PRE' or 'CAPA'")
+
         self.environment: str = environment
 
     def _to_erp_interface_json(self) -> Tuple[List, List, List]:

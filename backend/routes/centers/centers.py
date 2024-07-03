@@ -4,7 +4,7 @@ from typing import Any
 from common.services.centers.centers import Centers
 from common.errors import raise_http_error, ErrorCode
 from common.database.sqlserver.pool import SQLServerDatabasePool, get_db_pool
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 
 router = APIRouter()
@@ -21,10 +21,11 @@ async def get_orma_centers(
         external: bool = False,
         deleted: bool = False,
         page: int = 1,
-        size: int = 20,
-        db_pool: SQLServerDatabasePool = Depends(get_db_pool)
+        size: int = 20
 ) -> Any:
     try:
+        db_pool: SQLServerDatabasePool = get_db_pool()
+
         centers = Centers(
             center_name=center_name,
             center_code=center_code,

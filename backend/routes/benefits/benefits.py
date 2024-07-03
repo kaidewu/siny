@@ -8,7 +8,7 @@ import aiofiles.os
 from common.services.benefits.benefits import BenefitsUpload, Benefits
 from common.errors import raise_http_error, ErrorCode
 from common.database.sqlserver.pool import SQLServerDatabasePool, get_db_pool
-from fastapi import APIRouter, UploadFile, File, Depends
+from fastapi import APIRouter, UploadFile, File
 from fastapi.responses import JSONResponse, FileResponse
 from settings.settings import settings
 
@@ -22,14 +22,10 @@ router = APIRouter()
     status_code=201
 )
 async def upload_benefits_file(
-        environment: str = "PRE",
-        file: UploadFile = File(...),
-        db_pool: SQLServerDatabasePool = Depends(get_db_pool)
+        file: UploadFile = File(...)
 ) -> Any:
     """
     REST API of Benefits where need upload an Excel or CSV file to execute the data loading.
-    :param db_pool:
-    :param environment: Environment of SINA
     :param file: An Excel or CSV file to upload
     :return: Return the text of SQL Script or the path where it's located the SQL Script file. Still in development.
     """
@@ -50,10 +46,9 @@ async def upload_benefits_file(
         raise ValueError("The file uploaded is not an Excel. Please, "
                          "verify the file and try again.")
 
-    if environment not in ("PRO", "PRE", "CAPA", "DES"):
-        raise ValueError("Environment parameter must be 'PRO' or 'PRE' or 'CAPA' or 'DES'")
-
     try:
+        db_pool: SQLServerDatabasePool = get_db_pool()
+
         # Check if exists the uploaded file.
         if not file_path.exists():
             # If exists, save temporary the uploaded file.
@@ -62,7 +57,7 @@ async def upload_benefits_file(
 
         # Set class Benefits
         benefits_upload = BenefitsUpload(
-            environment=environment,
+            environment=db_pool.environment(),
             filename=file.filename,
             sqlserver=db_pool
         )
@@ -111,10 +106,11 @@ async def get_orma_benefits(
         end_created_date: str = datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z",
         deleted: bool = False,
         page: int = 1,
-        size: int = 20,
-        db_pool: SQLServerDatabasePool = Depends(get_db_pool)
+        size: int = 20
 ) -> Any:
     try:
+        db_pool: SQLServerDatabasePool = get_db_pool()
+
         benefits = Benefits(
             benefit_name=benefit_name,
             benefit_code=benefit_code,

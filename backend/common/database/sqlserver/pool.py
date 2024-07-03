@@ -14,6 +14,7 @@ class SQLServerDatabasePool:
             password: str,
             database: Union[str, None] = None,
             driver: Union[str, None] = None,
+            environment: str = "PRE"
     ) -> None:
         self.db_pool = None
         self.driver: str = driver if driver else settings.DRIVER
@@ -21,6 +22,7 @@ class SQLServerDatabasePool:
         self.database: str = database if database else "sinasuite"
         self.username: str = username
         self.password: str = password
+        self.environment: str = environment
 
     def init_pool(self) -> None:
         """ Initialize database connection pool """
@@ -105,6 +107,9 @@ class SQLServerDatabasePool:
             return _get_query_data
         except Exception as e:
             raise Exception(f"SQL Server Error: {str(e)}")
+
+    def environment(self) -> str:
+        return self.environment
 
 
 db_pool_instance: Union[SQLServerDatabasePool, None] = None
