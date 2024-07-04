@@ -13,7 +13,7 @@ class BenefitsUpload:
             self,
             environment: str,
             filename: str,
-            sqlserver
+            sqlserver: Any
     ) -> None:
         """
         Class BenefitsUpload read the Excel provided and loading the ERP_Prestacion, ERP_PrestacionServicio and
@@ -83,8 +83,8 @@ class BenefitsUpload:
                     {
                         "IdCatalogo": str(row["Catalogo"]) if not pandas.isna(row["Catalogo"]) else None,
                         "IdPrestacion": str(row["Codigo Prestacion"]),
-                        "IdFamilia": str(row["Codigo Familia"]),
-                        "IdSubfamilia": str(row["Codigo Subfamilia"]),
+                        "IdFamilia": str(row["Codigo Familia"]) if not pandas.isna(row["Codigo Familia"]) else None,
+                        "IdSubfamilia": str(row["Codigo Subfamilia"]) if not pandas.isna(row["Codigo Subfamilia"]) else None,
                         "Descripcion": str(row["Nombre Prestacion"]),
                         "UnidadMedida": str(row["Unidad Medida"]) if not pandas.isna(
                             row["Unidad Medida"]) else "UND",
@@ -143,7 +143,7 @@ class BenefitsUpload:
 
         return erp_prestacion_json, erp_prestacionservicio_json, erp_origenprestacion_json
 
-    def return_erp_interface_benefits_insertions(self):
+    def return_erp_interface_benefits_insertions(self) -> Dict:
         from common.services.erp_interface.prestacion.prestacion import InsertERPPrestacion
         from common.services.erp_interface.prestacion_servicio.prestacion_servicio import InsertERPPrestacionServicio
         from common.services.erp_interface.origen_prestacion.origen_prestacion import InsertERPOrigenPrestacion
@@ -152,31 +152,25 @@ class BenefitsUpload:
         returns_codes: Dict = {}
 
         insert_erp_prestacion = InsertERPPrestacion(
-            prestacion_body=erp_prestacion_json
+            prestacion_body=erp_prestacion_json,
+            sqlserver=self.sqlserver
         )
 
         returns_codes.update(insert_erp_prestacion.insert_prestacion())
 
         insert_erp_prestacionservicio = InsertERPPrestacionServicio(
-            prestacionservicio_body=erp_prestacionservicio_json
+            prestacionservicio_body=erp_prestacionservicio_json,
+            sqlserver=self.sqlserver
         )
 
         returns_codes.update(insert_erp_prestacionservicio.insert_prestacionservicio())
 
         insert_erp_origenprestacion = InsertERPOrigenPrestacion(
-            origenprestacion_body=erp_origenprestacion_json
+            origenprestacion_body=erp_origenprestacion_json,
+            sqlserver=self.sqlserver
         )
 
         returns_codes.update(insert_erp_origenprestacion.insert_origenprestacion())
-
-        if self.environment != "PRO":
-            print(Path(settings.RESOURCES_PATH).joinpath("stored procedures/PROC_GET_NAV_BENEFITS.sql").read_text().replace("{values_idprestaciones}", returns_codes.get("prestacion")))
-            try:
-                self.sqlserver.execute_procedures(
-                    Path(settings.RESOURCES_PATH).joinpath("stored procedures/PROC_GET_NAV_BENEFITS.sql").read_text().replace("{values_idprestaciones}", returns_codes.get("prestacion"))
-                )
-            except Exception as e:
-                raise Exception(f"{str(e)}\nCheck the table INTE_ERROR_NOTIFICATIONS.")
 
         return returns_codes
 

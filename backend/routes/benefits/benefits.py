@@ -1,11 +1,12 @@
 from pathlib import Path
-from typing import Any
+from typing import Any, Dict
 from datetime import datetime
 import sys
 
 import aiofiles
 import aiofiles.os
 from common.services.benefits.benefits import BenefitsUpload, Benefits
+from common.services.stored_procedures.proc_get_nav_benefits import ProcGetNavBenefits
 from common.errors import raise_http_error, ErrorCode
 from common.database.sqlserver.pool import SQLServerDatabasePool, get_db_pool
 from fastapi import APIRouter, UploadFile, File
@@ -56,14 +57,26 @@ async def upload_benefits_file(
                 await save_file.write(await file.read())
 
         # Set class Benefits
-        benefits_upload = BenefitsUpload(
-            environment=db_pool.environment(),
+        benefits_upload: BenefitsUpload = BenefitsUpload(
+            environment=db_pool.environment,
             filename=file.filename,
             sqlserver=db_pool
         )
 
+        dict_prestaciones: Dict = benefits_upload.return_erp_interface_benefits_insertions()
+
+        """
+        proc_get_bav_benefits: ProcGetNavBenefits = ProcGetNavBenefits(
+            environment=db_pool.environment,
+            sqlserver=db_pool,
+            prestaciones=dict_prestaciones
+        )
+
+        proc_get_bav_benefits.exec_proc_get_nav_benefits()
+        """
+
         return JSONResponse(
-            content=benefits_upload.return_erp_interface_benefits_insertions()
+            content=dict_prestaciones
         )
     except:
         raise raise_http_error(file=__file__, sys_traceback=sys.exc_info())
