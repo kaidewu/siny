@@ -49,7 +49,7 @@ async def upload_services_specialities(
                 await save_file.write(await file.read())
 
         services_specialities = ServicesSpecialitiesUpload(
-            environment=db_pool.environment(),
+            environment=db_pool.environment,
             file_path=file_path,
             sqlserver=db_pool
         )

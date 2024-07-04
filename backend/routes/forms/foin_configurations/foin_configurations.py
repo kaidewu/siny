@@ -48,7 +48,7 @@ async def upload_foin_configurations(
 
         foin_configurations_upload = FoinConfigurationUpload(
             file_path=file_path,
-            environment=db_pool.environment(),
+            environment=db_pool.environment,
             sqlserver=db_pool
         )
 
