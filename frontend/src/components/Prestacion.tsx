@@ -133,17 +133,6 @@ const Prestacion: React.FC = () => {
           </div>
         </DndProvider>
         <div className="flex justify-end items-center my-4 space-x-4">
-          <label htmlFor="environment" className="mr-2">Entorno:</label>
-          <select
-              id="environment"
-              value={environment}
-              onChange={(e) => setEnvironment(e.target.value)}
-              className="mr-4 p-2 border rounded"
-          >
-            <option value="PRE">PRE</option>
-            <option value="CAPA">CAPA</option>
-            <option value="PRO">PRO</option>
-          </select>
           <Button onClick={handleSendToApi}>GO</Button>
         </div>
         <BenefitsResponseBox response={apiResponse} />
