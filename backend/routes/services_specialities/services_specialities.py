@@ -63,3 +63,18 @@ async def upload_services_specialities(
         if file_path.exists() and file_path.is_file():
             # If it's true, remove the uploaded file.
             await aiofiles.os.remove(file_path)
+
+
+@router.get(
+    path="/service-specialities/example/excel"
+)
+async def get_service_specialities_excel() -> FileResponse:
+    excel_path: Path = Path(settings.RESOURCES_PATH).joinpath("examples/CARGA ESPECIALIDADES EXTERNAS.xlsx")
+
+    if not excel_path.exists() and not excel_path.is_file():
+        raise FileNotFoundError("The Excel doesn't exists. Please, contact to the administrator")
+
+    return FileResponse(
+        path=excel_path,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
