@@ -21,11 +21,11 @@ async def get_orma_benefit_types(
         deleted: bool = False,
         page: int = 1,
         size: int = 20
-) -> Any:
+) -> JSONResponse:
     try:
         db_pool: SQLServerDatabasePool = get_db_pool()
 
-        benefit_types = BenefitTypes(
+        benefit_types: BenefitTypes = BenefitTypes(
             benefit_type_name=benefit_type_name,
             benefit_type_code=benefit_type_code,
             deleted=deleted,

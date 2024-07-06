@@ -23,11 +23,11 @@ async def get_orma_benefit_subtypes(
         deleted: bool = False,
         page: int = 1,
         size: int = 20
-) -> Any:
+) -> JSONResponse:
     try:
         db_pool: SQLServerDatabasePool = get_db_pool()
 
-        benefit_subtypes = BenefitSubtypes(
+        benefit_subtypes: BenefitSubtypes = BenefitSubtypes(
             benefit_subtype_name=benefit_subtype_name,
             benefit_subtype_code=benefit_subtype_code,
             benefit_type_code=benefit_type_code,
@@ -52,11 +52,11 @@ async def get_orma_benefit_subtypes(
 )
 async def creation_benefit_subtype(
         benefit_subtypes_body: List[SubfamiliaModel]
-) -> Any:
+) -> JSONResponse:
     try:
         db_pool: SQLServerDatabasePool = get_db_pool()
 
-        benefit_subtypes_creation = BenefitSubtypesCreation(
+        benefit_subtypes_creation: BenefitSubtypesCreation = BenefitSubtypesCreation(
             benefit_subtypes_body=benefit_subtypes_body,
             sqlserver=db_pool
         )
