@@ -33,7 +33,7 @@ Webapp for data loading in SINASUITE.
         sudo apt-get update && ACCEPT_EULA=Y apt-get install -y msodbcsql17
         ```
 
-3. Download [Docker Desktop](https://docs.docker.com/desktop/install/windows-install/) and [Docker Compose](https://docs.docker.com/compose/install/). *Need Restart PC
+3. Download [Docker Desktop](https://docs.docker.com/desktop/install/windows-install/) and [Docker Compose](https://docs.docker.com/compose/install/). (Restart PC required)
 
     - On Windows 11:
         ```powershell
@@ -68,9 +68,26 @@ cd sinasuite-dl
 2. Build and run the Docker containers using Docker Compose:
 
 ```bash
-docker-compose up --build
+docker compose up -d
 ```
 
 3. Access the application:
 
    - Open your browser and go to http://localhost:3000.
+
+## Automated Docker Setup
+You can use the provided PowerShell (setup-docker.ps1) and Bash (setup-docker.sh) scripts to automate the Docker setup process.
+
+### PowerShell Script (setup-docker.ps1)
+Run the PowerShell script:
+```powershell
+.\script\setup-docker.ps1
+```
+
+### Bash Script (setup-docker.sh)
+Create a setup-docker.sh file with the following content:
+
+Make the Bash script executable:
+```bash
+chmod +x setup-docker.sh && ./script/setup-docker.sh
+```
