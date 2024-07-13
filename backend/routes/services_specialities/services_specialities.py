@@ -1,5 +1,4 @@
 import sys
-from typing import Any
 from pathlib import Path
 import aiofiles
 import aiofiles.os
@@ -21,7 +20,7 @@ router = APIRouter()
 )
 async def upload_services_specialities(
         file: UploadFile = File(...)
-) -> Any:
+) -> JSONResponse:
 
     file_path: Path = Path(settings.TEMP_PATH).joinpath(file.filename)
 
@@ -48,7 +47,7 @@ async def upload_services_specialities(
             async with aiofiles.open(file_path, "wb") as save_file:
                 await save_file.write(await file.read())
 
-        services_specialities = ServicesSpecialitiesUpload(
+        services_specialities: ServicesSpecialitiesUpload = ServicesSpecialitiesUpload(
             environment=db_pool.environment,
             file_path=file_path,
             sqlserver=db_pool
@@ -64,3 +63,18 @@ async def upload_services_specialities(
         if file_path.exists() and file_path.is_file():
             # If it's true, remove the uploaded file.
             await aiofiles.os.remove(file_path)
+
+
+@router.get(
+    path="/service-specialities/example/excel"
+)
+async def get_service_specialities_excel() -> FileResponse:
+    excel_path: Path = Path(settings.RESOURCES_PATH).joinpath("examples/CARGA ESPECIALIDADES EXTERNAS.xlsx")
+
+    if not excel_path.exists() and not excel_path.is_file():
+        raise FileNotFoundError("The Excel doesn't exists. Please, contact to the administrator")
+
+    return FileResponse(
+        path=excel_path,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )

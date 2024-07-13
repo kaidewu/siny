@@ -1,13 +1,12 @@
 import sys
 import aiofiles
 import aiofiles.os
-from typing import Any
 from pathlib import Path
 from common.services.forms.foin_configurations.foin_configurations import FoinConfigurationUpload
 from common.database.sqlserver.pool import SQLServerDatabasePool, get_db_pool
 from common.errors import raise_http_error
 from settings.settings import settings
-from fastapi import APIRouter, File, UploadFile, Depends
+from fastapi import APIRouter, File, UploadFile
 from fastapi.responses import JSONResponse, FileResponse
 
 router = APIRouter()
@@ -21,7 +20,7 @@ router = APIRouter()
 )
 async def upload_foin_configurations(
         file: UploadFile = File(...)
-) -> Any:
+) -> JSONResponse:
     db_pool: SQLServerDatabasePool = get_db_pool()
 
     file_path: Path = Path(settings.TEMP_PATH).joinpath(file.filename)
@@ -46,7 +45,7 @@ async def upload_foin_configurations(
             async with aiofiles.open(file_path, "wb") as save_file:
                 await save_file.write(await file.read())
 
-        foin_configurations_upload = FoinConfigurationUpload(
+        foin_configurations_upload: FoinConfigurationUpload = FoinConfigurationUpload(
             file_path=file_path,
             environment=db_pool.environment,
             sqlserver=db_pool
@@ -69,7 +68,7 @@ async def upload_foin_configurations(
     tags=["Example Excel Forms"],
     summary="Return the Excel for the data loading for Forms"
 )
-async def get_benefit_excel():
+async def get_benefit_excel() -> FileResponse:
 
     excel_path: Path = Path(settings.RESOURCES_PATH).joinpath("examples/CARGA FORMS.xlsx")
 

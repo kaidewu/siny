@@ -65,7 +65,7 @@ class Settings:
         self.PROD: bool = True if self.MODE == "prod" else False
 
         # Database Information
-        self.DRIVER: str = "ODBC Driver 17 for SQL Server"
+        self.DRIVER: str = "ODBC Driver 18 for SQL Server"
 
 
 settings = Settings()

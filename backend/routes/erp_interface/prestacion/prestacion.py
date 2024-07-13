@@ -1,4 +1,4 @@
-from typing import Any, List
+from typing import List
 import sys
 
 from common.services.erp_interface.prestacion.prestacion import ERPPrestacion, InsertERPPrestacion
@@ -29,11 +29,11 @@ async def get_erp_prestacion(
         page: int = 1,
         size: int = 20,
 
-) -> Any:
+) -> JSONResponse:
     try:
         db_pool: SQLServerDatabasePool = get_db_pool()
 
-        erp_prestacion = ERPPrestacion(
+        erp_prestacion: ERPPrestacion = ERPPrestacion(
             catalog_id=catalog_id,
             prestacion_name=prestacion_name,
             prestacion_code=prestacion_code,
@@ -63,11 +63,11 @@ async def get_erp_prestacion(
 )
 async def insert_erp_prestacion(
         prestacion_body: List[PrestacionModel]
-):
+) -> JSONResponse:
     try:
         db_pool: SQLServerDatabasePool = get_db_pool()
 
-        insert_erp_prestacion = InsertERPPrestacion(
+        insert_erp_prestacion: InsertERPPrestacion = InsertERPPrestacion(
             prestacion_body=prestacion_body,
             sqlserver=db_pool
         )

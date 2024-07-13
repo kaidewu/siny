@@ -26,11 +26,11 @@ async def get_erp_prestacion(
         active: bool = True,
         page: int = 1,
         size: int = 20
-) -> Any:
+) -> JSONResponse:
     try:
         db_pool: SQLServerDatabasePool = get_db_pool()
 
-        erp_origenprestacion = ERPOrigenPrestacion(
+        erp_origenprestacion: ERPOrigenPrestacion = ERPOrigenPrestacion(
             catalog_id=catalog_id,
             prestacion_name=prestacion_name,
             prestacion_code=prestacion_code,
@@ -58,11 +58,11 @@ async def get_erp_prestacion(
 )
 async def insert_erp_prestacion(
         origenprestacion_body: List[OrigenPrestacionModel]
-):
+) -> JSONResponse:
     try:
         db_pool: SQLServerDatabasePool = get_db_pool()
 
-        insert_erp_origenprestacion = InsertERPOrigenPrestacion(
+        insert_erp_origenprestacion: InsertERPOrigenPrestacion = InsertERPOrigenPrestacion(
             origenprestacion_body=origenprestacion_body,
             sqlserver=db_pool
         )

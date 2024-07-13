@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, Dict
+from typing import Dict
 from datetime import datetime
 import sys
 
@@ -24,7 +24,7 @@ router = APIRouter()
 )
 async def upload_benefits_file(
         file: UploadFile = File(...)
-) -> Any:
+) -> JSONResponse:
     """
     REST API of Benefits where need upload an Excel or CSV file to execute the data loading.
     :param file: An Excel or CSV file to upload
@@ -87,12 +87,20 @@ async def upload_benefits_file(
             await aiofiles.os.remove(file_path)
 
 
+@router.post(
+    path="/check/exists/benefits",
+    tags=["Check Benefits"],
+    summary="Check if exists benefits"
+)
+async def check_benefits() -> JSONResponse:
+
+
 @router.get(
     path="/benefits/example/excel",
     tags=["Example Excel benefits"],
     summary="Return the Excel for the data loading for benefits"
 )
-async def get_benefit_excel():
+async def get_benefit_excel() -> FileResponse:
     excel_path: Path = Path(settings.RESOURCES_PATH).joinpath("examples/CARGA PRESTACION.xlsx")
 
     if not excel_path.exists() and not excel_path.is_file():
@@ -120,11 +128,11 @@ async def get_orma_benefits(
         deleted: bool = False,
         page: int = 1,
         size: int = 20
-) -> Any:
+) -> JSONResponse:
     try:
         db_pool: SQLServerDatabasePool = get_db_pool()
 
-        benefits = Benefits(
+        benefits: Benefits = Benefits(
             benefit_name=benefit_name,
             benefit_code=benefit_code,
             benefit_type_code=benefit_type_code,

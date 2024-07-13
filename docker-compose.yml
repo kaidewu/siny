@@ -1,12 +1,40 @@
 #version: '3.8'
 
 services:
-  sinasuite-dl:
+  frontend:
+    user: root
+    container_name: frontend
     build:
-      context: .
-      dockerfile: docker/Dockerfile
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - '3000:3000'
+    networks:
+      - backend
+    restart: unless-stopped
+
+  backend:
+    user: root
+    container_name: backend
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
     ports:
       - '8080:8080'
-      - '3000:3000'
     volumes:
-      - .:/sinasuite-dl
+      - ./backend/common/errors/logs:/backend/common/errors/logs
+    networks:
+      - backend
+    restart: unless-stopped
+
+networks:
+  backend:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 20.15.2.0/24
+          gateway: 20.15.2.1
+    labels:
+      com.docker.compose.network: backend
+      com.docker.compose.project: sinasuite-dl
+      com.docker.compose.version: 1.0.0

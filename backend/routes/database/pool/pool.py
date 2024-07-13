@@ -1,5 +1,4 @@
 import sys
-from typing import Any
 from common.database.sqlserver.pool import SQLServerDatabasePool, set_db_pool, get_db_pool
 from schemas.database.pool import DatabaseCredentials
 from common.errors import raise_http_error, ErrorCode
@@ -17,9 +16,9 @@ router = APIRouter()
 )
 async def change_connection_pool(
         credentials: DatabaseCredentials
-) -> Any:
+) -> JSONResponse:
     try:
-        sqlserver_db_pool = SQLServerDatabasePool(
+        sqlserver_db_pool: SQLServerDatabasePool = SQLServerDatabasePool(
             driver=credentials.driver,
             servername=credentials.servername,
             database=credentials.database,

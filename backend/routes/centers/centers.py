@@ -22,11 +22,11 @@ async def get_orma_centers(
         deleted: bool = False,
         page: int = 1,
         size: int = 20
-) -> Any:
+) -> JSONResponse:
     try:
         db_pool: SQLServerDatabasePool = get_db_pool()
 
-        centers = Centers(
+        centers: Centers = Centers(
             center_name=center_name,
             center_code=center_code,
             external=external,
