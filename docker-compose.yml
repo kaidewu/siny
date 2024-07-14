@@ -29,12 +29,3 @@ services:
 
 networks:
   backend:
-    driver: bridge
-    ipam:
-      config:
-        - subnet: 20.15.2.0/24
-          gateway: 20.15.2.1
-    labels:
-      com.docker.compose.network: backend
-      com.docker.compose.project: sinasuite-dl
-      com.docker.compose.version: 1.0.0
