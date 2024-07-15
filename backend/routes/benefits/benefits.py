@@ -6,7 +6,8 @@ import sys
 import aiofiles
 import aiofiles.os
 from common.services.benefits.benefits import BenefitsUpload, Benefits
-from common.services.stored_procedures.proc_get_nav_benefits import ProcGetNavBenefits
+from schemas.benefits.benefits import BenefitsModel
+# from common.services.stored_procedures.proc_get_nav_benefits import ProcGetNavBenefits
 from common.errors import raise_http_error, ErrorCode
 from common.database.sqlserver.pool import SQLServerDatabasePool, get_db_pool
 from fastapi import APIRouter, UploadFile, File
@@ -92,7 +93,27 @@ async def upload_benefits_file(
     tags=["Check Benefits"],
     summary="Check if exists benefits"
 )
-async def check_benefits() -> JSONResponse:
+async def check_benefits(
+        benefits: BenefitsModel
+) -> JSONResponse:
+    if not benefits:
+        raise ValueError("The benefits code parameter can't be empty.")
+
+    list_benefits: BenefitsModel = benefits
+    try:
+        db_pool: SQLServerDatabasePool = get_db_pool()
+
+        benefits: Benefits = Benefits(
+            benefit_code=list_benefits.benefitsCode,
+            sqlserver=db_pool
+        )
+        return JSONResponse(
+            content={
+                "benefits": benefits.return_benefits()
+            }
+        )
+    except:
+        raise_http_error(file=__file__, sys_traceback=sys.exc_info())
 
 
 @router.get(
@@ -129,6 +150,13 @@ async def get_orma_benefits(
         page: int = 1,
         size: int = 20
 ) -> JSONResponse:
+    if (
+            (start_created_date and not end_created_date) or
+            (not start_created_date and end_created_date) or
+            (not start_created_date and not end_created_date)
+    ):
+        raise ValueError("The range of created start date or end date can't be empty.")
+
     try:
         db_pool: SQLServerDatabasePool = get_db_pool()
 

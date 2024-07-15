@@ -63,7 +63,8 @@ class BenefitsUpload:
             )
 
             if not service_query:
-                raise Exception(f"The service {str(row['Servicio'])} in the row {index} doesn't exists. Please, verify and try again.")
+                raise Exception(
+                    f"The service {str(row['Servicio'])} in the row {index} doesn't exists. Please, verify and try again.")
 
             service_code: str = str(service_query[0][0])
 
@@ -74,23 +75,26 @@ class BenefitsUpload:
                 )
 
                 if not unit_validation:
-                    raise ValueError(f"The column 'Unidad Medida' in the row {index} doesn't exists. Please, verify and try again.")
+                    raise ValueError(
+                        f"The column 'Unidad Medida' in the row {index} doesn't exists. Please, verify and try again.")
 
             # Set each Model with the Excel data
             # Creation of ERP_Prestacion JSON
             erp_prestacion_json.append(
                 PrestacionModel(**
-                    {
-                        "IdCatalogo": str(row["Catalogo"]) if not pandas.isna(row["Catalogo"]) else None,
-                        "IdPrestacion": str(row["Codigo Prestacion"]),
-                        "IdFamilia": str(row["Codigo Familia"]) if not pandas.isna(row["Codigo Familia"]) else None,
-                        "IdSubfamilia": str(row["Codigo Subfamilia"]) if not pandas.isna(row["Codigo Subfamilia"]) else None,
-                        "Descripcion": str(row["Nombre Prestacion"]),
-                        "UnidadMedida": str(row["Unidad Medida"]) if not pandas.isna(
-                            row["Unidad Medida"]) else "UND",
-                        "Duracion": int(row["Duracion"]) if not pandas.isna(row["Duracion"]) else 0,
-                    }
-                )
+                                {
+                                    "IdCatalogo": str(row["Catalogo"]) if not pandas.isna(row["Catalogo"]) else None,
+                                    "IdPrestacion": str(row["Codigo Prestacion"]),
+                                    "IdFamilia": str(row["Codigo Familia"]) if not pandas.isna(
+                                        row["Codigo Familia"]) else None,
+                                    "IdSubfamilia": str(row["Codigo Subfamilia"]) if not pandas.isna(
+                                        row["Codigo Subfamilia"]) else None,
+                                    "Descripcion": str(row["Nombre Prestacion"]),
+                                    "UnidadMedida": str(row["Unidad Medida"]) if not pandas.isna(
+                                        row["Unidad Medida"]) else "UND",
+                                    "Duracion": int(row["Duracion"]) if not pandas.isna(row["Duracion"]) else 0,
+                                }
+                                )
             )
 
             # Creation of ERP_PrestacionServicio JSON
@@ -105,19 +109,20 @@ class BenefitsUpload:
 
             erp_prestacionservicio_json.append(
                 PrestacionServicioModel(**
-                    {
-                        "IdCatalogo": str(row["Catalogo"]) if not pandas.isna(row["Catalogo"]) else None,
-                        "IdPrestacion": str(row["Codigo Prestacion"]),
-                        "IdServicio": service_code,
-                        "Agendable": True,
-                        "Duracion": int(row["Duracion"]) if not pandas.isna(row["Duracion"]) else 0,
-                        "CodCentro": None if pandas.isna(row["Centro"]) else center_code,
-                        "Departamental": str(row["Codigo Prestacion"]),
-                        "Incremento": int(row["Duracion"]) + 10 if not pandas.isna(
-                            row["Duracion"]) else 0,
-                        "Decremento": int(10)
-                    }
-                )
+                                        {
+                                            "IdCatalogo": str(row["Catalogo"]) if not pandas.isna(
+                                                row["Catalogo"]) else None,
+                                            "IdPrestacion": str(row["Codigo Prestacion"]),
+                                            "IdServicio": service_code,
+                                            "Agendable": True,
+                                            "Duracion": int(row["Duracion"]) if not pandas.isna(row["Duracion"]) else 0,
+                                            "CodCentro": None if pandas.isna(row["Centro"]) else center_code,
+                                            "Departamental": str(row["Codigo Prestacion"]),
+                                            "Incremento": int(row["Duracion"]) + 10 if not pandas.isna(
+                                                row["Duracion"]) else 0,
+                                            "Decremento": int(10)
+                                        }
+                                        )
             )
 
             ambits_query: Any = self.sqlserver.execute_select(
@@ -132,13 +137,14 @@ class BenefitsUpload:
             # Creation of ERP_PrestacionServicio JSON
             erp_origenprestacion_json.append(
                 OrigenPrestacionModel(**
-                    {
-                        "CodCentro": None if pandas.isna(row["Centro"]) else center_code,
-                        "IdAmbito": ambits_code,
-                        "IdCatalogo": str(row["Catalogo"]) if not pandas.isna(row["Catalogo"]) else None,
-                        "IdPrestacion": str(row["Codigo Prestacion"])
-                    }
-                )
+                                      {
+                                          "CodCentro": None if pandas.isna(row["Centro"]) else center_code,
+                                          "IdAmbito": ambits_code,
+                                          "IdCatalogo": str(row["Catalogo"]) if not pandas.isna(
+                                              row["Catalogo"]) else None,
+                                          "IdPrestacion": str(row["Codigo Prestacion"])
+                                      }
+                                      )
             )
 
         return erp_prestacion_json, erp_prestacionservicio_json, erp_origenprestacion_json
@@ -178,17 +184,17 @@ class BenefitsUpload:
 class Benefits:
     def __init__(
             self,
-            benefit_name: str,
-            benefit_code: str,
-            benefit_type_code: str,
-            benefit_subtype_code: str,
-            active: bool,
-            start_created_date: str,
-            end_created_date: str,
-            deleted: bool,
-            page: int,
-            size: int,
-            sqlserver: Any
+            benefit_code: str | list[str],
+            sqlserver: Any,
+            benefit_name: str | None = None,
+            benefit_type_code: str | None = None,
+            benefit_subtype_code: str | None = None,
+            active: bool = True,
+            start_created_date: str | None = None,
+            end_created_date: str | None = None,
+            deleted: bool = False,
+            page: int | None = None,
+            size: int | None = None
     ) -> None:
 
         if not sqlserver:
@@ -196,7 +202,7 @@ class Benefits:
 
         self.sqlserver: Any = sqlserver
         self.benefit_name: str = benefit_name
-        self.benefit_code: str = benefit_code
+        self.benefit_code: str | list[str] = benefit_code
         self.benefit_type_code: str = benefit_type_code
         self.benefit_subtype_code: str = benefit_subtype_code
         self.active: bool = active
@@ -209,22 +215,15 @@ class Benefits:
         self.size: int = size
 
         # Validation size
-        if 0 < self.size > 100:
-            raise ValueError("The size parameter must be between 0 and 100.")
+        if self.size:
+            if 0 < self.size > 100:
+                raise ValueError("The size parameter must be between 0 and 100.")
 
     def return_benefits(self) -> List[Dict]:
-        # Set params
-        params: tuple = tuple(
-            filter(lambda bene: bene is not None,
-                   (self.active if self.active else False,
-                    self.deleted if not self.deleted else True,
-                    self.benefit_name if self.benefit_name else None,
-                    self.benefit_code if self.benefit_code else None,
-                    self.benefit_type_code if self.benefit_type_code else None,
-                    self.benefit_subtype_code if self.benefit_subtype_code else None,
-                    self.start_created_date if self.start_created_date else None,
-                    self.end_created_date if self.end_created_date else None,
-                    )))
+        params: tuple = (
+                self.active if self.active else False,
+                self.deleted if not self.deleted else True
+        )
 
         # Set the query
         query: str = (
@@ -235,34 +234,45 @@ class Benefits:
             f"LEFT OUTER JOIN [sinasuite].[dbo].[ORMA_BENEFIT_SUBTYPES] obs ON obs.BEST_ID = ob.BEST_ID AND obs.BEST_DELETED = 0 "
             f"WHERE ob.BENE_ACTIVE = ? AND ob.BENE_DELETED = ?")
 
+        # BENEFIT CODE
+        if self.benefit_code:
+            if isinstance(self.benefit_code, str):
+                query += " AND ob.BENE_CODE LIKE ?"
+                params = params + (self.benefit_code,)
+
+            if isinstance(self.benefit_code, list):
+                quotes: list[str] = []
+
+                for i in self.benefit_code:
+                    quotes.append("?")
+
+                query += f" AND ob.BENE_CODE IN ({','.join(quotes)})"
+                params = params + tuple(self.benefit_code)
+
         # BENEFIT NAME
         if self.benefit_name:
             query += " AND ob.BENE_NAME LIKE ?"
-
-        # BENEFIT CODE
-        if self.benefit_code:
-            query += " AND ob.BENE_CODE LIKE ?"
+            params = params + (self.benefit_name,)
 
         # BENEFIT TYPE CODE
         if self.benefit_type_code:
             query += " AND obt.BETY_CODE = ?"
+            params = params + (self.benefit_type_code,)
 
         # BENEFIT SUBTYPE CODE
         if self.benefit_subtype_code:
             query += " AND obs.BEST_CODE = ?"
+            params = params + (self.benefit_subtype_code,)
 
         # CREATED DATE
-        if (
-                (self.start_created_date and not self.end_created_date) or
-                (not self.start_created_date and self.end_created_date)
-        ):
-            raise ValueError("The range of created start date or end date can't be empty.")
-        elif self.start_created_date and self.end_created_date:
+        if self.start_created_date and self.end_created_date:
             query += " AND ob.BENE_CREATED_DATE BETWEEN ? AND ?"
+            params = params + (self.start_created_date, self.end_created_date,)
 
         # FETCH ROW LIMITS
-        query += (f" ORDER BY ob.BENE_NAME OFFSET {self.size * (self.page - 1)} ROWS "
-                  f"FETCH NEXT {self.size} ROWS ONLY")
+        if self.size and self.page:
+            query += (f" ORDER BY ob.BENE_NAME OFFSET {self.size * (self.page - 1)} ROWS "
+                      f"FETCH NEXT {self.size} ROWS ONLY")
 
         # Execute the query
         _get_benefits: Any = self.sqlserver.execute_select(
