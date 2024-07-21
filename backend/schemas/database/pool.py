@@ -1,11 +1,11 @@
 from pydantic import BaseModel
-from typing import Union
+from typing import Optional
 
 
 class DatabaseCredentials(BaseModel):
-    driver: Union[str, None]
+    driver: Optional[str]
     servername: str
-    database: Union[str, None]
+    database: Optional[str]
     username: str
     password: str
     environment: str
