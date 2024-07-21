@@ -1,4 +1,5 @@
 import os
+from os import PathLike
 import logging
 from pathlib import Path
 from dotenv import load_dotenv
@@ -50,6 +51,7 @@ class Settings:
         self.API_ROUTE_PREFIX: str = "/api/v1"
         self.HOST: str = "0.0.0.0"  # It can be your local IP
         self.SERVICE_PORT: int = 8080
+        self.REQUIREMENTS_TXT: PathLike = Path("requirements.txt")
 
         self.HELLOWORLD_HTML: Path = Path("../backend/resources/templates/helloworld.html")
 
@@ -66,6 +68,10 @@ class Settings:
 
         # Database Information
         self.DRIVER: str = "ODBC Driver 18 for SQL Server"
+
+        # Get Ollama REST API URL
+        self.OLLAMA_API: str = load_str_env("OLLAMA_API", required=True)
+        self.OLLAMA_MODEL: str = "llama3"
 
 
 settings = Settings()
