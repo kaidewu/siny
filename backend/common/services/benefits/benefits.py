@@ -54,9 +54,6 @@ class BenefitsUpload:
             if pandas.isna(row["Servicio"]):
                 raise Exception("Servicio in the row {index} can't no be empty")
 
-            if pandas.isna(row["Ambito"]):
-                raise Exception("Ambito in the row {index} can't no be empty")
-
             service_query: Any = self.sqlserver.execute_select(
                 "SELECT s.IdServicio FROM [sinasuite].[dbo].[ERP_Servicio] s "
                 "WHERE s.Activo = 1 AND CAST(s.Descripcion AS NVARCHAR(MAX)) = ?", params=str(row["Servicio"])
@@ -82,19 +79,19 @@ class BenefitsUpload:
             # Creation of ERP_Prestacion JSON
             erp_prestacion_json.append(
                 PrestacionModel(**
-                                {
-                                    "IdCatalogo": str(row["Catalogo"]) if not pandas.isna(row["Catalogo"]) else None,
-                                    "IdPrestacion": str(row["Codigo Prestacion"]),
-                                    "IdFamilia": str(row["Codigo Familia"]) if not pandas.isna(
-                                        row["Codigo Familia"]) else None,
-                                    "IdSubfamilia": str(row["Codigo Subfamilia"]) if not pandas.isna(
-                                        row["Codigo Subfamilia"]) else None,
-                                    "Descripcion": str(row["Nombre Prestacion"]),
-                                    "UnidadMedida": str(row["Unidad Medida"]) if not pandas.isna(
-                                        row["Unidad Medida"]) else "UND",
-                                    "Duracion": int(row["Duracion"]) if not pandas.isna(row["Duracion"]) else 0,
-                                }
-                                )
+                    {
+                        "IdCatalogo": str(row["Catalogo"]) if not pandas.isna(row["Catalogo"]) else None,
+                        "IdPrestacion": str(row["Codigo Prestacion"]),
+                        "IdFamilia": str(row["Codigo Familia"]) if not pandas.isna(
+                            row["Codigo Familia"]) else None,
+                        "IdSubfamilia": str(row["Codigo Subfamilia"]) if not pandas.isna(
+                            row["Codigo Subfamilia"]) else None,
+                        "Descripcion": str(row["Nombre Prestacion"]),
+                        "UnidadMedida": str(row["Unidad Medida"]) if not pandas.isna(
+                            row["Unidad Medida"]) else "UND",
+                        "Duracion": int(row["Duracion"]) if not pandas.isna(row["Duracion"]) else 0,
+                    }
+                )
             )
 
             # Creation of ERP_PrestacionServicio JSON
@@ -109,42 +106,45 @@ class BenefitsUpload:
 
             erp_prestacionservicio_json.append(
                 PrestacionServicioModel(**
-                                        {
-                                            "IdCatalogo": str(row["Catalogo"]) if not pandas.isna(
-                                                row["Catalogo"]) else None,
-                                            "IdPrestacion": str(row["Codigo Prestacion"]),
-                                            "IdServicio": service_code,
-                                            "Agendable": True,
-                                            "Duracion": int(row["Duracion"]) if not pandas.isna(row["Duracion"]) else 0,
-                                            "CodCentro": None if pandas.isna(row["Centro"]) else center_code,
-                                            "Departamental": str(row["Codigo Prestacion"]),
-                                            "Incremento": int(row["Duracion"]) + 10 if not pandas.isna(
-                                                row["Duracion"]) else 0,
-                                            "Decremento": int(10)
-                                        }
-                                        )
+                    {
+                        "IdCatalogo": str(row["Catalogo"]) if not pandas.isna(
+                            row["Catalogo"]) else None,
+                        "IdPrestacion": str(row["Codigo Prestacion"]),
+                        "IdServicio": service_code,
+                        "Agendable": True,
+                        "Duracion": int(row["Duracion"]) if not pandas.isna(row["Duracion"]) else 0,
+                        "CodCentro": None if pandas.isna(row["Centro"]) else center_code,
+                        "Departamental": str(row["Codigo Prestacion"]),
+                        "Incremento": int(row["Duracion"]) + 10 if not pandas.isna(
+                            row["Duracion"]) else 0,
+                        "Decremento": int(10)
+                    }
+                )
             )
 
-            ambits_query: Any = self.sqlserver.execute_select(
-                "SELECT oa.AMBI_CODE FROM [sinasuite].[dbo].[ORMA_AMBITS] oa "
-                "WHERE oa.AMBI_DELETED = 0 AND oa.AMBI_DESCRIPTION_ES = ?", params=str(row["Ambito"])
-            )
-            if not ambits_query:
-                raise Exception("Ambito not supported")
+            ambit_code: str | None = None
 
-            ambits_code: str = str(ambits_query[0][0])
+            if not pandas.isna(row["Ambito"]):
+                ambits_query: Any = self.sqlserver.execute_select(
+                    "SELECT oa.AMBI_CODE FROM [sinasuite].[dbo].[ORMA_AMBITS] oa "
+                    "WHERE oa.AMBI_DELETED = 0 AND oa.AMBI_DESCRIPTION_ES = ?", params=str(row["Ambito"])
+                )
+                if not ambits_query:
+                    raise Exception("Ambito not supported")
+
+                ambit_code: str = str(ambits_query[0][0])
 
             # Creation of ERP_PrestacionServicio JSON
             erp_origenprestacion_json.append(
                 OrigenPrestacionModel(**
-                                      {
-                                          "CodCentro": None if pandas.isna(row["Centro"]) else center_code,
-                                          "IdAmbito": ambits_code,
-                                          "IdCatalogo": str(row["Catalogo"]) if not pandas.isna(
-                                              row["Catalogo"]) else None,
-                                          "IdPrestacion": str(row["Codigo Prestacion"])
-                                      }
-                                      )
+                    {
+                      "CodCentro": None if pandas.isna(row["Centro"]) else center_code,
+                      "IdAmbito": ambit_code,
+                      "IdCatalogo": str(row["Catalogo"]) if not pandas.isna(
+                          row["Catalogo"]) else None,
+                      "IdPrestacion": str(row["Codigo Prestacion"])
+                    }
+                )
             )
 
         return erp_prestacion_json, erp_prestacionservicio_json, erp_origenprestacion_json
