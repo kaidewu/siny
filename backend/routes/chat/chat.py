@@ -45,9 +45,7 @@ async def api_internal_chat(
         chat_model: ChatModel = ChatModel(
             **
             {
-                "model": "llama3",
                 "messages": {
-                    "role": "user",
                     "content": f"You are a Backend Software Developer with 25+ years of experience in all "
                                f"language of programming that you learned in the Harvard University "
                                f"in the computer sciences degree, working in Google, Amazon, Apple, Microsoft, "
@@ -61,12 +59,8 @@ async def api_internal_chat(
                                f"I give you my Python code where has happened the error before:\n"
                                f"`{Path(chat_ask_model.filePath).read_text().replace('\"', '\'')}`\n"
                                f"The datas I using are:\n"
-                               f"`{chat_ask_model.dataUsed}`",
-                    "images": None
+                               f"`{chat_ask_model.dataUsed}`"
                 },
-                "format": None,
-                "keep_alive": None,
-                "stream": False,
                 "options": {
                     "seed": 101,
                     "temperature": 0.3
