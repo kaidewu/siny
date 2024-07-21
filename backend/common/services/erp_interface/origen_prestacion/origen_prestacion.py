@@ -157,7 +157,10 @@ class InsertERPOrigenPrestacion:
                     )
                 ))
                 query_delete: str = ("DELETE FROM [sinasuite].[dbo].[ERP_OrigenPrestacion] WHERE IdCatalogo = ? "
-                                     "AND IdPrestacion = ? AND IdAmbito = ? AND Activo = 1")
+                                     "AND IdPrestacion = ? AND Activo = 1")
+
+                if prestacion.IdAmbito:
+                    query_delete += " AND IdAmbito = ?"
 
                 if prestacion.CodCentro:
                     query_delete += " AND CodCentro = ?"

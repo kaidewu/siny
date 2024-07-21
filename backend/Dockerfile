@@ -24,7 +24,7 @@ RUN apt-get update && ACCEPT_EULA=Y apt-get install -y msodbcsql18
 # Clean up APT when done
 RUN apt-get autoremove -y && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-# Copy the requirements file and install dependencies
+# Copy the requirements and install dependencies
 COPY requirements.txt /backend/requirements.txt
 
 # Install any needed packages specified in requirements.txt

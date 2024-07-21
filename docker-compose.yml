@@ -26,15 +26,22 @@ services:
     networks:
       - backend
     restart: unless-stopped
+  
+  ollama:
+    user: root
+    container_name: ollama
+    build:
+      context: backend/ollama
+      dockerfile: Dockerfile
+    ports:
+      - '11434:11434'
+    storage_opt:
+      size: 30G
+    volumes:
+      - ollama:/root/.ollama
+    networks:
+      - backend
+    restart: unless-stopped
 
 networks:
   backend:
-    driver: bridge
-    ipam:
-      config:
-        - subnet: 20.15.2.0/24
-          gateway: 20.15.2.1
-    labels:
-      com.docker.compose.network: backend
-      com.docker.compose.project: sinasuite-dl
-      com.docker.compose.version: 1.0.0

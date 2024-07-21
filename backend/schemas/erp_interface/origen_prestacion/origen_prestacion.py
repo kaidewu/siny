@@ -1,9 +1,9 @@
 from pydantic import BaseModel
-from typing import Union
+from typing import Optional
 
 
 class OrigenPrestacionModel(BaseModel):
-    CodCentro: Union[str, None]
-    IdAmbito: str
-    IdCatalogo: Union[str, None]
+    CodCentro: Optional[str]
+    IdAmbito: Optional[str]
+    IdCatalogo: Optional[str]
     IdPrestacion: str

@@ -127,36 +127,35 @@ error_system = {
 
 
 def register_error_logs(file: Any, message: str, uuid: UUID):
-    # Check if exists the Logs folder
-    if not Path(settings.ERROR_LOG_PATH).exists():
-        Path(settings.ERROR_LOG_PATH).mkdir()
+    # Set datetime now
+    current_date: datetime = datetime.now()
 
-    if (Path(settings.ERROR_LOG_PATH).joinpath(
-                f"{(datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")}-sinasuite-dl.log").exists()
-    and Path(settings.ERROR_LOG_PATH).joinpath(f"{(datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")}-sinasuite-dl.log").is_file()):
-        with zipfile.ZipFile(
-                Path(settings.ERROR_LOG_PATH).joinpath(
-                    f"{(datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")}-sinasuite-dl.zip"),
-                "w",
-                zipfile.ZIP_DEFLATED
-        ) as zipf:
-            zipf.write(
-                Path(settings.ERROR_LOG_PATH).joinpath(
-                    f"{(datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")}-sinasuite-dl.log")
-            )
-        Path(settings.ERROR_LOG_PATH.resolve()).joinpath(
-            f"{(datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")}-sinasuite-dl.log").unlink()
+    # Set error log path
+    error_log_path: Path = Path(settings.ERROR_LOG_PATH).resolve()
+
+    # Check if exists the Logs folder
+    error_log_path.mkdir(exist_ok=True)
+
+    # Iterate over all log files in the directory
+    for log_file in error_log_path.glob("server.log.*"):
+        # Get the modification time of the log file
+        modification_time = datetime.fromtimestamp(log_file.stat().st_mtime)
+
+        # Check if the log file is older than 7 days
+        if modification_time < current_date - timedelta(weeks=1):
+            # Remove the log file
+            log_file.unlink()
+
+    # Save each log the day before
+    if error_log_path.joinpath(f"server.log.{(current_date - timedelta(days=1)).strftime("%Y-%m-%d")}").exists():
+        error_log_path.rename(error_log_path.joinpath(f"server.log.{(current_date - timedelta(days=1)).strftime("%Y-%m-%d")}"))
+        error_log_path.joinpath("server.log").unlink()
 
     # Log the error into a file
-    with open(
-            Path(settings.ERROR_LOG_PATH).joinpath(
-                f"{datetime.now().strftime("%Y-%m-%d")}-sinasuite-dl.log"),
-            "a",
-            encoding="utf-8"
-    ) as log:
+    with open(error_log_path.joinpath("server.log"), "a", encoding="utf-8") as log:
         log.write(
-            f"\n#############################################################################################"
-            f"\n{datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")} - {str(Path(file).relative_to(settings.ROOT_PATH)).replace("/", ".")} - {uuid}\n"
+            f"\n{'='*200}"
+            f"\n{current_date.strftime("%Y-%m-%d %H:%M:%S.%f")} - {uuid} - {str(Path(file).relative_to(settings.ROOT_PATH)).replace("/", ".")}\n"
             f"{message}\n")
 
 

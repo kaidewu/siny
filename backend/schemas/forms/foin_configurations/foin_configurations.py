@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import LiteralString
+from typing import Optional
 
 
 class FoinConfigurationUploadModel(BaseModel):
@@ -16,9 +16,9 @@ class FoinConfigurationUploadModel(BaseModel):
     ambitName: str
     rolId: int
     rolName: str
-    benefitId: int | None
-    benefitName: str | None
-    catalogId: int | None
-    anesthesiaId: int | None
+    benefitId: Optional[int]
+    benefitName: Optional[str]
+    catalogId: Optional[int]
+    anesthesiaId: Optional[int]
     formId: int
     languageId: int
