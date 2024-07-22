@@ -13,7 +13,7 @@ def add_benefits_route(route_prefix: str):
     from .forms.foin_configurations.foin_configurations import router as foin_configurations_router
     from .services_specialities.services_specialities import router as services_specialities_router
     from .activities.sina_bc.sina_bc import router as sina_bc_router
-    from backend.routes.chat.chat import router as chat_router
+    from .chat.chat import router as chat_router
 
     routes.include_router(benefits_router, prefix=route_prefix)
     routes.include_router(benefits_types_router, prefix=route_prefix)
