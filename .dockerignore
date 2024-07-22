@@ -1,4 +1,33 @@
-node_module/
+# dependencies
+/node_modules
+/.pnp
+.pnp.js
+# testing
+/coverage
+
+# production
+/build
+
+# Dependency directories
+node_modules/
+jspm_packages/
+
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+*.zip
+.zip
+
+*.pid
+.pid
+node_modules
+frontend/node_modules
+__pycache__
+*.pyc
+
+.pnpm-store/
+
 .venv/
 venv/
 .env.example
