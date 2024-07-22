@@ -46,12 +46,7 @@ async def api_internal_chat(
             **
             {
                 "messages": {
-                    "content": f"You are a Backend Software Developer with 25+ years of experience in all "
-                               f"language of programming that you learned in the Harvard University "
-                               f"in the computer sciences degree, working in Google, Amazon, Apple, Microsoft, "
-                               f"Spotify, CrownStrike, Nvidia, Facebook (Meta Platforms), American Express, "
-                               f"Pfizer, Starbucks Corp, Paypal, SpaceX and NASA.\n"
-                               f"In this Project called `sinasuite-dl`, where my github "
+                    "content": f"In this Project called `sinasuite-dl`, where my github "
                                f"link is: https://github.com/kaidewu/sinasuite-dl, it's made in Python using "
                                f"this packages: `{Path(settings.REQUIREMENTS_TXT).read_text()}`.\n"
                                f"I got this error in Python:\n"
