@@ -35,10 +35,8 @@ services:
       dockerfile: Dockerfile
     ports:
       - '11434:11434'
-    storage_opt:
-      size: 30G
     volumes:
-      - ollama:/root/.ollama
+      - ./backend/ollama/ollama:/root/.ollama
     networks:
       - backend
     restart: unless-stopped
