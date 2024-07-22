@@ -1,5 +1,5 @@
 import httpx
-from backend import __version__
+import __version__
 import platform
 from settings.settings import settings
 from schemas.ollama.chat import ChatModel
