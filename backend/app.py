@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from contextlib import asynccontextmanager
 from routes import routes
 from pathlib import Path
 from starlette.middleware.cors import CORSMiddleware
@@ -22,19 +23,23 @@ console_handler.setFormatter(formatter)
 logger.addHandler(console_handler)
 
 
-def create_app():
-    # Set FastAPI
-    app = FastAPI()
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Start up parameters
+    logger.info("FastAPI app startup...")
 
-    @app.on_event("startup")
-    def startup_event():
-        logger.info("FastAPI app startup...")
-
-    @app.on_event("shutdown")
-    def shutdown_event():
+    try:
+        yield
+    finally:
+        # shutdown parameters
         if db_pool_instance:
             db_pool_instance.close_pool()
         logger.info("FastAPI app shutdown...")
+
+
+def create_app():
+    # Set FastAPI
+    app = FastAPI(lifespan=lifespan)
 
     app.exception_handler(HTTPException)(custom_http_exception_handler)
 
