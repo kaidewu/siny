@@ -56,10 +56,10 @@ class Settings:
         self.HELLOWORLD_HTML: Path = Path("../backend/resources/templates/helloworld.html")
 
         # LOGGER LEVEL
-        self.LOG_LEVEL: str = load_str_env("LOG_LEVEL", required=True)
+        self.LOG_LEVEL: str = "DEBUG"
 
         # Mode
-        self.MODE: str = load_str_env("MODE", required=True)
+        self.MODE: str = "dev"
         self.MODE: str = self.MODE.lower()
         logger.info(f"MODE = {self.MODE}")
         self.DEV: bool = True if self.MODE == "dev" else False
@@ -70,7 +70,7 @@ class Settings:
         self.DRIVER: str = "ODBC Driver 18 for SQL Server"
 
         # Get Ollama REST API URL
-        self.OLLAMA_API: str = load_str_env("OLLAMA_API", required=True)
+        self.OLLAMA_API: str = "http://localhost:11434"
         self.OLLAMA_MODEL: str = "llama3"
 
 
