@@ -28,15 +28,13 @@ services:
     restart: unless-stopped
   
   ollama:
+    image: ollama/ollama
     user: root
     container_name: ollama
-    build:
-      context: backend/ollama
-      dockerfile: Dockerfile
     ports:
       - '11434:11434'
     volumes:
-      - ./backend/ollama/ollama:/root/.ollama
+      - ./backend/common/ollama:/root/.ollama
     networks:
       - backend
     restart: unless-stopped
