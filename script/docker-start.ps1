@@ -77,7 +77,7 @@ Write-Host "Running llama3 in ollama container..."
 Write-Host
 
 # Execute the command to run llama3 in the ollama container
-Invoke-Expression "docker exec -it ollama ollama run llama3"
+Invoke-Expression "docker exec -it ollama ollama run llama3.1"
 
 # Output completion message
 Write-Host "Deployment and execution complete."
