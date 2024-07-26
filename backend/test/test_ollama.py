@@ -1,27 +1,24 @@
-from dotenv import load_dotenv
 import httpx
-import os
-
-load_dotenv("../.env")
+from backend.settings.settings import settings
 
 
 # Test of connection to ollama REST API
-def test_connection_ollama():
+def test_connection_ollama() -> None:
     with httpx.Client() as client:
         response = client.get(
-            url=os.getenv("OLLAMA_API")
+            url=settings.OLLAMA_API
         )
 
     assert response.status_code == 200
 
 
 # Test if the model llama3 is running
-def test_client_chat():
+def test_client_chat() -> None:
     with httpx.Client() as client:
         response = client.post(
-            url=f"{os.getenv("OLLAMA_API")}/api/chat",
+            url=f"{settings.OLLAMA_API}/api/chat",
             json={
-                'model': 'llama3',
+                'model': settings.OLLAMA_MODEL,
                 'messages': [{'role': 'user', 'content': 'Give me a random number between 1 and 3'}],
                 'tools': [],
                 'stream': False,
@@ -32,5 +29,6 @@ def test_client_chat():
         )
 
     assert response.status_code == 200
-    assert response.json()["model"] == "llama3"
+    assert response.json()["model"] == settings.OLLAMA_MODEL
     assert response.json()["message"]["role"] == "assistant"
+    assert response.json()["message"]["content"] != ""
