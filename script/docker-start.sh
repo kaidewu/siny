@@ -14,12 +14,12 @@ function Remove_Items {
 
         # Remove folders recursively
         if [ -d "$full_path" ]; then
-            find "$base_path" -type d -name "$(basename $path)" -exec rm -rf {} +
-            echo "Removed folders matching: $full_path"
+            echo "Removing folders matching: $full_path"
+            sudo find "$base_path" -type d -name "$(basename "$path")" -exec rm -rf {} +
         # Remove files recursively (using globbing)
         elif [[ "$path" == *\** ]]; then
-            find "$base_path" -type f -name "$(basename $path)" -exec rm -f {} +
-            echo "Removed files matching: $full_path"
+            echo "Removing files matching: $full_path"
+            sudo find "$base_path" -type f -name "$(basename "$path")" -exec rm -f {} +
         fi
     done
 }
@@ -37,6 +37,7 @@ frontend_paths_to_remove=(
 # Define paths to remove in the backend directory
 backend_paths_to_remove=(
     "__pycache__"
+    ".pytest_cache"
     "*.log"
     "*.zip"
     ".venv"
@@ -64,10 +65,10 @@ else
 fi
 
 # Down the docker compose
-$down
+sudo $down
 
 # Execute the Docker Compose command to deploy the stack
-$cmd
+sudo $cmd
 
 # Ensure the stack is deployed before running the next command
 sleep 10
@@ -77,7 +78,7 @@ echo "Running llama3 in ollama container..."
 echo
 
 # Execute the command to run llama3 in the ollama container
-docker exec -it ollama ollama run llama3
+sudo docker exec -it ollama ollama run llama3.1
 
 # Output completion message
 echo "Deployment and execution complete."
