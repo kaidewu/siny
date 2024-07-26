@@ -24,6 +24,7 @@ yarn-error.log*
 node_modules
 frontend/node_modules
 __pycache__
+.pytest_cache
 *.pyc
 
 .pnpm-store/
