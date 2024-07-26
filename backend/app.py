@@ -5,6 +5,7 @@ from pathlib import Path
 from starlette.middleware.cors import CORSMiddleware
 from common.errors.exception_handlers import *
 from common.database.sqlserver.pool import db_pool_instance
+from common.database.mongodb.pool import MongoDBPool, set_db_pool
 from settings.settings import settings
 import logging
 
@@ -28,12 +29,22 @@ async def lifespan(app: FastAPI):
     # Start up parameters
     logger.info("FastAPI app startup...")
 
+    # Start up MongoDB
+    client_mongo: MongoDBPool = MongoDBPool()
+    client_mongo.init_pool()
+    set_db_pool(client_mongo)
+
     try:
         yield
     finally:
-        # shutdown parameters
+        # Database shutdown parameters
         if db_pool_instance:
             db_pool_instance.close_pool()
+
+        # MongoDB shutdown parameters
+        if client_mongo:
+            client_mongo.close_pool()
+
         logger.info("FastAPI app shutdown...")
 
 

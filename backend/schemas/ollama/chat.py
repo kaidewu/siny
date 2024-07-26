@@ -1,6 +1,14 @@
 from pydantic import BaseModel
+import uuid
 from typing import Optional, Any
 from settings.settings import settings
+
+
+class ChatInsertModel(BaseModel):
+    id: str
+    model: str
+    created_at: str
+    message: dict
 
 
 class ChatMessagesModel(BaseModel):
@@ -10,8 +18,9 @@ class ChatMessagesModel(BaseModel):
 
 
 class ChatModel(BaseModel):
+    id: uuid.UUID
     model: str = settings.OLLAMA_MODEL
-    messages: ChatMessagesModel
+    message: ChatMessagesModel
     format: Optional[str] = None
     options: Optional[Any] = None
     stream: Optional[bool] = False

@@ -4,6 +4,7 @@ from common.errors import raise_http_error
 from settings.settings import settings
 from common.services.ollama.chat import Chat
 from schemas.ollama.chat import ChatModel, AskChatModel
+from common.database.mongodb.pool import get_db_pool
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 
@@ -11,17 +12,22 @@ router = APIRouter()
 
 
 @router.post(
-    path="/ollama/chat",
+    path="/ollama/chat/{uuid}",
     tags=["OLLAMA CHAT AI"],
     summary="OLLAMA AI MODEL"
 )
 async def api_ollama_chat(
+        uuid: str,
         chat_data: ChatModel
 ) -> JSONResponse:
 
     try:
+        get_db = get_db_pool()
+
         chat: Chat = Chat(
-            chat=chat_data
+            chat=chat_data,
+            uuid=uuid,
+            mongodb=get_db
         )
 
         return JSONResponse(
