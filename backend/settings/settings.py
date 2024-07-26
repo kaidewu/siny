@@ -69,9 +69,13 @@ class Settings:
         # Database Information
         self.DRIVER: str = "ODBC Driver 18 for SQL Server"
 
+        # MongoDB Information
+        self.MONGO_ENDPOINT: str = "127.0.0.1"
+        self.MONGO_PORT: int = 27017
+
         # Get Ollama REST API URL
         self.OLLAMA_API: str = "http://localhost:11434"
-        self.OLLAMA_MODEL: str = "llama3"
+        self.OLLAMA_MODEL: str = "llama3.1"
 
 
 settings = Settings()
