@@ -1,14 +1,26 @@
 #version: '3.8'
 
 services:
-  frontend:
+  ollama:
+    image: ollama/ollama
     user: root
-    container_name: frontend
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
+    container_name: ollama
     ports:
-      - '3000:3000'
+      - '11434:11434'
+    volumes:
+      - ./backend/common/ollama:/root/.ollama
+    networks:
+      - backend
+    restart: unless-stopped
+
+  mongodb:
+    image: mongo
+    user: root
+    container_name: mongodb
+    ports:
+      - '27017:27017'
+    volumes:
+      - ./backend/common/errors/logs/mongod.log:/var/log/mongodb/mongod.log
     networks:
       - backend
     restart: unless-stopped
@@ -26,15 +38,15 @@ services:
     networks:
       - backend
     restart: unless-stopped
-  
-  ollama:
-    image: ollama/ollama
+
+  frontend:
     user: root
-    container_name: ollama
+    container_name: frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
     ports:
-      - '11434:11434'
-    volumes:
-      - ./backend/common/ollama:/root/.ollama
+      - '3000:3000'
     networks:
       - backend
     restart: unless-stopped
